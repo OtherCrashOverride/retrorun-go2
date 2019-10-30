@@ -11,6 +11,7 @@
 
 #include <go2/display.h>
 #include <go2/queue.h>
+#include <go2/audio.h>
 
 
 #include <linux/dma-buf.h>
@@ -34,12 +35,6 @@
 #include <exception>
 
 
-
-
-//#define SOUND_FREQUENCY 44100
-#define SOUND_SAMPLES_SIZE  (2048)
-#define SOUND_CHANNEL_COUNT 2
-
 #define DEFAULT_WIDTH (480)
 #define DEFAULT_HEIGHT (320)
 
@@ -52,12 +47,7 @@ go2_presenter_t* presenter;
 float aspect_ratio;
 uint32_t color_format;
 
-
-static ALCdevice *device;
-static ALCcontext *context;
-static ALuint source;
-static ALsizei frequency;
-static bool isAudioInitialized = false;
+go2_audio_t* audio;
 
 static go2_gamepad_t gamepadState;
 
@@ -68,96 +58,14 @@ static int hasStencil = false;
 retro_hw_context_reset_t retro_context_reset;
 
 
-void InitSound()
+void InitSound(int frequency)
 {
-#if 0
-    return;
-#endif
-
-    printf("Sound: SOUND_FREQUENCY=%d\n", frequency);
-
-	device = alcOpenDevice(NULL);
-	if (!device)
-	{
-		printf("OpenAL: alcOpenDevice failed.\n");
-		exit(1);
-	}
-
-	context = alcCreateContext(device, NULL);
-	if (!alcMakeContextCurrent(context))
-	{
-		printf("OpenAL: alcMakeContextCurrent failed.\n");
-		exit(1);
-	}
-
-	alGenSources((ALuint)1, &source);
-
-	alSourcef(source, AL_PITCH, 1);
-	alSourcef(source, AL_GAIN, 1);
-	alSource3f(source, AL_POSITION, 0, 0, 0);
-	alSource3f(source, AL_VELOCITY, 0, 0, 0);
-	alSourcei(source, AL_LOOPING, AL_FALSE);
-
-	//memset(audioBuffer, 0, AUDIOBUFFER_LENGTH * sizeof(short));
-
-	const int BUFFER_COUNT = 4;
-	for (int i = 0; i < BUFFER_COUNT; ++i)
-	{
-		ALuint buffer;
-		alGenBuffers((ALuint)1, &buffer);
-		alBufferData(buffer, AL_FORMAT_STEREO16, NULL, 0, frequency);
-		alSourceQueueBuffers(source, 1, &buffer);
-	}
-
-	alSourcePlay(source);
-
-    isAudioInitialized = true;
+    audio = go2_audio_create(frequency);
 }
 
 void ProcessAudio(const void* buffer, int frames)
 {
-    if (!isAudioInitialized) return;
-
-#if 0
-    return;
-#endif
-
-    if (!alcMakeContextCurrent(context))
-    {
-        printf("OpenAL: alcMakeContextCurrent failed.\n");
-        exit(1);
-    }
-
-    ALint processed = 0;
-    while(!processed)
-    {
-        alGetSourceiv(source, AL_BUFFERS_PROCESSED, &processed);
-
-        if (!processed)
-        {
-            sleep(0);
-            //printf("Audio overflow.\n");
-            //return;
-        }
-    }
-
-    ALuint openALBufferID;
-    alSourceUnqueueBuffers(source, 1, &openALBufferID);
-
-    ALuint format = AL_FORMAT_STEREO16;
-
-    int dataByteLength = frames * sizeof(short) * SOUND_CHANNEL_COUNT;
-    alBufferData(openALBufferID, format, buffer, dataByteLength, frequency);
-
-    alSourceQueueBuffers(source, 1, &openALBufferID);
-
-    ALint result;
-    alGetSourcei(source, AL_SOURCE_STATE, &result);
-
-    if (result != AL_PLAYING)
-    {
-        alSourcePlay(source);
-    }
+    go2_audio_submit(audio, (const short*)buffer, frames);
 }
 
 // ----
@@ -242,8 +150,7 @@ static void audio_init(int freq)
 {
     // Note: audio stutters in OpenAL unless the buffer frequency at upload
     // is the same as during creation.
-	frequency = freq;
-    InitSound();
+    InitSound(freq);
 
     printf("audio_init: freq=%d\n", freq);
 }
