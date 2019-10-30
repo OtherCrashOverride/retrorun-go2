@@ -6,12 +6,11 @@
 
 #include <unistd.h>
 
-#include "go2input.h"
-
 
 #include <go2/display.h>
 #include <go2/queue.h>
 #include <go2/audio.h>
+#include <go2/input.h>
 
 
 #include <linux/dma-buf.h>
@@ -50,6 +49,7 @@ uint32_t color_format;
 go2_audio_t* audio;
 
 static go2_gamepad_t gamepadState;
+go2_input_t* input;
 
 static bool isOpenGL = false;
 static int GLContextMajor = 0;
@@ -434,7 +434,7 @@ static void core_video_refresh(const void * data, unsigned width, unsigned heigh
 
 static void core_input_poll(void)
 {
-	go2_gamepad_read(&gamepadState);
+	go2_input_read(input, &gamepadState);
 }
 
 static int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id)
@@ -758,21 +758,11 @@ int main(int argc, char *argv[])
 #endif
 
 	display = go2_display_create();
-	presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
+	
+    presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
 
-    // display_surface = go2_surface_create(display, go2_display_width_get(display), go2_display_height_get(display), DRM_FORMAT_RGB565);
+    input = go2_input_create();
 
-    // frame_buffer = go2_frame_buffer_create(display_surface);
-    // if (!frame_buffer)
-    // {
-    //     printf("go2_frame_buffer_create failed.\n");
-    //     throw std::exception();
-    // }
-
-    // go2_display_present(display, frame_buffer);
-
-
-    go2_gamepad_init();
 
 #if 1
     // Init
