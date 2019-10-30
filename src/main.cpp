@@ -10,6 +10,7 @@
 
 
 #include <go2/display.h>
+#include <go2/queue.h>
 
 
 #include <linux/dma-buf.h>
@@ -47,6 +48,9 @@ go2_display_t* display;
 go2_surface_t* surface;
 go2_surface_t* display_surface;
 go2_frame_buffer_t* frame_buffer;
+go2_presenter_t* presenter;
+float aspect_ratio;
+uint32_t color_format;
 
 
 static ALCdevice *device;
@@ -216,7 +220,7 @@ static void video_configure(const struct retro_game_geometry* geom)
         int ah = ALIGN(geom->max_height, 32);
         printf ("video_configure: aw=%d, ah=%d\n", aw, ah);
 
-        surface = go2_surface_create(display, aw, ah, DRM_FORMAT_RGB565);
+        surface = go2_surface_create(display, aw, ah, color_format);
         if (!surface)
         {
             printf("go2_surface_create failed.\n");
@@ -224,37 +228,8 @@ static void video_configure(const struct retro_game_geometry* geom)
         }
         
 
-        float aspect = geom->aspect_ratio;
-        int x;
-        int y;
-        int w;
-        int h;
-        if (aspect >= 1.0f)
-        {
-            h = 320;
-            
-            w = 320 * aspect;
-            w = (w > 480) ? 480 : w;
-
-            x = (480 / 2) - (w / 2);
-            y = 0;
-        }
-        else if (aspect > 0.0f)
-        {
-            w = 480;
-            h = 480 * aspect;
-            y = (320 / 2) - (h / 2);
-            x = 0;
-        }
-        else
-        {
-            x = 0;
-            y = 0;
-            w = 480;
-            h = 320;
-        }
-        
-        printf("video_configure: rect=%d, %d, %d, %d\n", y, x, h, w);
+        aspect_ratio = geom->aspect_ratio;        
+        //printf("video_configure: rect=%d, %d, %d, %d\n", y, x, h, w);
     }
 }
 
@@ -422,11 +397,11 @@ static bool core_environment(unsigned cmd, void* data)
                 switch (fmt)
                 {   
                 case RETRO_PIXEL_FORMAT_RGB565:
-                    //format = ColorFormat::R5G6B5;
+                    color_format = DRM_FORMAT_RGB565;
                     break;
                 
                 case RETRO_PIXEL_FORMAT_XRGB8888:
-                    //format = ColorFormat::A8_R8_G8_B8;
+                    color_format = DRM_FORMAT_XRGB8888;
                     break;
 
                 default:
@@ -503,20 +478,48 @@ static void core_video_refresh(const void * data, unsigned width, unsigned heigh
         uint8_t* dst = (uint8_t*)go2_surface_map(surface);
         int bpp = go2_drm_format_get_bpp(go2_surface_format_get(surface)) / 8;
 
-        int y = height;
-        while(y > 0)
+        int yy = height;
+        while(yy > 0)
         {
             memcpy(dst, src, width * bpp);
             
             src += pitch;
             dst += go2_surface_stride_get(surface);
             
-            --y;
+            --yy;
         }
 
-        go2_surface_blit(surface, 0, 0, width, height,
-                         display_surface, 0, 0, go2_display_width_get(display), go2_display_height_get(display),
-                         GO2_ROTATION_DEGREES_270);
+        // go2_surface_blit(surface, 0, 0, width, height,
+        //                  display_surface, 0, 0, go2_display_width_get(display), go2_display_height_get(display),
+        //                  GO2_ROTATION_DEGREES_270);
+
+        int x;
+        int y;
+        int w;
+        int h;
+        if (aspect_ratio >= 1.0f)
+        {
+            h = go2_display_width_get(display);
+            
+            w = h * aspect_ratio;
+            w = (w > go2_display_height_get(display)) ? go2_display_height_get(display) : w;
+
+            x = (go2_display_height_get(display) / 2) - (w / 2);
+            y = 0;
+        }
+        else
+        {
+            x = 0;
+            y = 0;
+            w = go2_display_height_get(display);
+            h = go2_display_width_get(display);
+        }
+
+        go2_presenter_post(presenter,
+                           surface,
+                           0, 0, width, height,
+                           y, x, h, w,
+                           GO2_ROTATION_DEGREES_270);
     }
 }
 
@@ -830,19 +833,36 @@ int main(int argc, char *argv[])
 {
     //printf("argc=%d, argv=%p\n", argc, argv);
 
-
-	display = go2_display_create();
-	
-    display_surface = go2_surface_create(display, go2_display_width_get(display), go2_display_height_get(display), DRM_FORMAT_RGB565);
-
-    frame_buffer = go2_frame_buffer_create(display_surface);
-    if (!frame_buffer)
+#if 0
+    // queue test
+    go2_queue_t* queue = go2_queue_create(10);
+    for (int i = 0; i < 10; ++i)
     {
-        printf("go2_frame_buffer_create failed.\n");
-        throw std::exception();
+        go2_queue_push(queue, (void*)i);
     }
 
-    go2_display_present(display, frame_buffer);
+    for (int i = 0; i < 10; ++i)
+    {
+        void* val = go2_queue_pop(queue);
+        printf("queue[%d]=%p\n", i, val);
+    }
+
+    return 0;
+#endif
+
+	display = go2_display_create();
+	presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
+
+    // display_surface = go2_surface_create(display, go2_display_width_get(display), go2_display_height_get(display), DRM_FORMAT_RGB565);
+
+    // frame_buffer = go2_frame_buffer_create(display_surface);
+    // if (!frame_buffer)
+    // {
+    //     printf("go2_frame_buffer_create failed.\n");
+    //     throw std::exception();
+    // }
+
+    // go2_display_present(display, frame_buffer);
 
 
     go2_gamepad_init();
