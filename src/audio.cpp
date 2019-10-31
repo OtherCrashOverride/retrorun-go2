@@ -13,8 +13,7 @@ void audio_init(int freq)
     // Note: audio stutters in OpenAL unless the buffer frequency at upload
     // is the same as during creation.
     audio = go2_audio_create(freq);
-
-    printf("audio_init: freq=%d\n", freq);
+    //printf("audio_init: freq=%d\n", freq);
 }
 
 void audio_deinit()

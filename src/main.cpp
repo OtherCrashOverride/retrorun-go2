@@ -49,8 +49,8 @@ static struct {
 	//	unsigned retro_get_region(void);
 	//	void *retro_get_memory_data(unsigned id);
 	//	size_t retro_get_memory_size(unsigned id);
-    
 } g_retro;
+
 
 #define load_sym(V, S) do {\
         if (!((*(void**)&V) = dlsym(g_retro.handle, #S))) \
@@ -59,6 +59,7 @@ static struct {
             abort(); \
         } \
 	} while (0)
+
 #define load_retro_sym(S) load_sym(g_retro.S, S)
 
 
@@ -91,14 +92,10 @@ static void core_log(enum retro_log_level level, const char* fmt, ...)
 		exit(EXIT_FAILURE);
 }
 
-
-
-static const char* test_value = "UNIBIOS";
-
 static __eglMustCastToProperFunctionPointerType get_proc_address(const char* sym)
 {
     __eglMustCastToProperFunctionPointerType result = eglGetProcAddress(sym);
-    printf("get_proc_address: sym='%s', result=%p\n", sym, (void*)result);
+    //printf("get_proc_address: sym='%s', result=%p\n", sym, (void*)result);
 
     return result;
 }
@@ -110,11 +107,11 @@ static bool core_environment(unsigned cmd, void* data)
 	switch (cmd)
     {
         case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
-            {
-                struct retro_log_callback * cb = (struct retro_log_callback * ) data;
-                cb->log = core_log;
-                break;
-            }
+        {
+            struct retro_log_callback * cb = (struct retro_log_callback * ) data;
+            cb->log = core_log;
+            break;
+        }
 
         case RETRO_ENVIRONMENT_GET_CAN_DUPE:
             bval = (bool*)data;
@@ -122,24 +119,24 @@ static bool core_environment(unsigned cmd, void* data)
             break;
 
         case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
-            {
-                const enum retro_pixel_format fmt = *(enum retro_pixel_format *)data;
-                switch (fmt)
-                {   
-                case RETRO_PIXEL_FORMAT_RGB565:
-                    color_format = DRM_FORMAT_RGB565;
-                    break;
-                
-                case RETRO_PIXEL_FORMAT_XRGB8888:
-                    color_format = DRM_FORMAT_XRGB8888;
-                    break;
+        {
+            const enum retro_pixel_format fmt = *(enum retro_pixel_format *)data;
+            switch (fmt)
+            {   
+            case RETRO_PIXEL_FORMAT_RGB565:
+                color_format = DRM_FORMAT_RGB565;
+                break;
+            
+            case RETRO_PIXEL_FORMAT_XRGB8888:
+                color_format = DRM_FORMAT_XRGB8888;
+                break;
 
-                default:
-                    return false;
-                }
-
-                return true;
+            default:
+                return false;
             }
+
+            return true;
+        }
 
         case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
         case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
@@ -147,31 +144,30 @@ static bool core_environment(unsigned cmd, void* data)
             return true;
 
         case RETRO_ENVIRONMENT_SET_HW_RENDER:
-            {
-                retro_hw_render_callback* hw = (retro_hw_render_callback*)data;
+        {
+            retro_hw_render_callback* hw = (retro_hw_render_callback*)data;
 
-                printf("RETRO_ENVIRONMENT_SET_HW_RENDER\n");
-                isOpenGL = true;
-                GLContextMajor = hw->version_major;
-                GLContextMinor = hw->version_minor;
-                retro_context_reset = hw->context_reset;
+            printf("RETRO_ENVIRONMENT_SET_HW_RENDER\n");
+            isOpenGL = true;
+            GLContextMajor = hw->version_major;
+            GLContextMinor = hw->version_minor;
+            retro_context_reset = hw->context_reset;
 
-                hw->get_current_framebuffer = core_video_get_current_framebuffer;
-                hw->get_proc_address = (retro_hw_get_proc_address_t)get_proc_address;
+            hw->get_current_framebuffer = core_video_get_current_framebuffer;
+            hw->get_proc_address = (retro_hw_get_proc_address_t)get_proc_address;
 
-                printf("HWRENDER: context_type=%d, major=%d, minor=%d\n",
-                    hw->context_type, GLContextMajor, GLContextMinor);
+            printf("HWRENDER: context_type=%d, major=%d, minor=%d\n",
+                hw->context_type, GLContextMajor, GLContextMinor);
 
-                return true;
-            }
+            return true;
+        }
 
         case RETRO_ENVIRONMENT_GET_VARIABLE:
         {
             retro_variable* var = (retro_variable*)data;
             if (strcmp(var->key, "fbneo-neogeo-mode") == 0)
             {
-                printf("fbneo-neogeo-mode=%s\n", test_value);
-                var->value = test_value;
+                var->value = "UNIBIOS";
                 return true;
             }
             else if (strcmp(var->key, "atari800_resolution") == 0)
@@ -186,6 +182,7 @@ static bool core_environment(unsigned cmd, void* data)
             }
             return false;
         }
+
         default:
             core_log(RETRO_LOG_DEBUG, "Unhandled env #%u", cmd);
             return false;
@@ -315,7 +312,6 @@ static void core_unload()
 		dlclose(g_retro.handle);
 }
 
-
 static const char* FileNameFromPath(const char* fullpath)
 {
     // Find last slash
@@ -336,19 +332,19 @@ static int LoadState(const char* saveName)
 {
     FILE* file = fopen(saveName, "rb");
 	if (!file)
-		return 0;
+		return -1;
 
 	fseek(file, 0, SEEK_END);
 	long size = ftell(file);
 	rewind(file);
 
-    if (size < 1) return 0;
+    if (size < 1) return -1;
 
     void* ptr = malloc(size);
     if (!ptr) abort();
 
     size_t count = fread(ptr, 1, size, file);
-    if (size != count)
+    if ((size_t)size != count)
     {
         free(ptr);
         abort();
@@ -358,9 +354,11 @@ static int LoadState(const char* saveName)
 
     g_retro.retro_unserialize(ptr, size);
     free(ptr);
+
+    return 0;
 }
 
-static int SaveState(const char* saveName)
+static void SaveState(const char* saveName)
 {
     size_t size = g_retro.retro_serialize_size();
     
@@ -391,29 +389,7 @@ int main(int argc, char *argv[])
 {
     //printf("argc=%d, argv=%p\n", argc, argv);
 
-#if 0
-    // queue test
-    go2_queue_t* queue = go2_queue_create(10);
-    for (int i = 0; i < 10; ++i)
-    {
-        go2_queue_push(queue, (void*)i);
-    }
 
-    for (int i = 0; i < 10; ++i)
-    {
-        void* val = go2_queue_pop(queue);
-        printf("queue[%d]=%p\n", i, val);
-    }
-
-    return 0;
-#endif
-
-
-
-
-
-
-#if 1
     // Init
 	if (argc < 3)
     {
@@ -424,7 +400,7 @@ int main(int argc, char *argv[])
 	core_load(argv[1]);
     core_load_game(argv[2]);
     
-#endif
+
     const char* fileName = FileNameFromPath(argv[2]);
     
     char* saveName = (char*)malloc(strlen(fileName) + 4 + 1);
@@ -442,7 +418,6 @@ int main(int argc, char *argv[])
     {                
         if (input_exit_requested)
             isRunning = false;
-
 
         g_retro.retro_run();
     }

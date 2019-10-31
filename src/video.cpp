@@ -115,9 +115,6 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             --yy;
         }
 
-        // go2_surface_blit(surface, 0, 0, width, height,
-        //                  display_surface, 0, 0, go2_display_width_get(display), go2_display_height_get(display),
-        //                  GO2_ROTATION_DEGREES_270);
 
         int x;
         int y;
