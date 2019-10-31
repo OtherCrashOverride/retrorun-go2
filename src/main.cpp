@@ -58,18 +58,6 @@ static int hasStencil = false;
 retro_hw_context_reset_t retro_context_reset;
 
 
-void InitSound(int frequency)
-{
-    audio = go2_audio_create(frequency);
-}
-
-void ProcessAudio(const void* buffer, int frames)
-{
-    go2_audio_submit(audio, (const short*)buffer, frames);
-}
-
-// ----
-
 static struct {
 	void * handle;
 	bool initialized;
@@ -150,7 +138,7 @@ static void audio_init(int freq)
 {
     // Note: audio stutters in OpenAL unless the buffer frequency at upload
     // is the same as during creation.
-    InitSound(freq);
+    audio = go2_audio_create(freq);
 
     printf("audio_init: freq=%d\n", freq);
 }
@@ -539,7 +527,7 @@ static void core_audio_sample(int16_t left, int16_t right)
 
 static size_t core_audio_sample_batch(const int16_t * data, size_t frames)
 {
-	ProcessAudio(data, frames);
+	go2_audio_submit(audio, (const short*)data, frames);
 	return 0;
 }
 
