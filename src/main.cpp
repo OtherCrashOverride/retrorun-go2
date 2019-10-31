@@ -1,13 +1,9 @@
-// OpenAL
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
-
+#include "video.h"
 
 #include <unistd.h>
 
 
-#include <go2/display.h>
+
 #include <go2/queue.h>
 #include <go2/audio.h>
 #include <go2/input.h>
@@ -22,39 +18,26 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <exception>
 
 #define EGL_EGLEXT_PROTOTYPES
-#define GL_GLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #include <drm/drm_fourcc.h>
-
-#include <exception>
 
 
 #define DEFAULT_WIDTH (480)
 #define DEFAULT_HEIGHT (320)
 
 
-go2_display_t* display;
-go2_surface_t* surface;
-go2_surface_t* display_surface;
-go2_frame_buffer_t* frame_buffer;
-go2_presenter_t* presenter;
-float aspect_ratio;
-uint32_t color_format;
+
 
 go2_audio_t* audio;
 
 static go2_gamepad_t gamepadState;
 go2_input_t* input;
 
-static bool isOpenGL = false;
-static int GLContextMajor = 0;
-static int GLContextMinor = 0;
-static int hasStencil = false;
+
 retro_hw_context_reset_t retro_context_reset;
 
 
@@ -81,6 +64,7 @@ static struct {
 	//	unsigned retro_get_region(void);
 	//	void *retro_get_memory_data(unsigned id);
 	//	size_t retro_get_memory_size(unsigned id);
+    
 } g_retro;
 
 #define load_sym(V, S) do {\
@@ -92,47 +76,8 @@ static struct {
 	} while (0)
 #define load_retro_sym(S) load_sym(g_retro.S, S)
 
-#define ALIGN(val, align)	(((val) + (align) - 1) & ~((align) - 1))
 
-static void video_configure(const struct retro_game_geometry* geom)
-{
-	printf("video_configure: base_width=%d, base_height=%d, max_width=%d, max_height=%d, aspect_ratio=%f\n",
-        geom->base_width, geom->base_height,
-        geom->max_width, geom->max_height,
-        geom->aspect_ratio);
 
-            
-    if (isOpenGL)
-    {
-        throw std::exception();
-
-        retro_context_reset();
-    }
-    else
-    {
-        if (surface) abort();
-
-        int aw = ALIGN(geom->max_width, 32);
-        int ah = ALIGN(geom->max_height, 32);
-        printf ("video_configure: aw=%d, ah=%d\n", aw, ah);
-
-        surface = go2_surface_create(display, aw, ah, color_format);
-        if (!surface)
-        {
-            printf("go2_surface_create failed.\n");
-            throw std::exception();
-        }
-        
-
-        aspect_ratio = geom->aspect_ratio;        
-        //printf("video_configure: rect=%d, %d, %d, %d\n", y, x, h, w);
-    }
-}
-
-static void video_deinit()
-{
-
-}
 
 static void audio_init(int freq)
 {
@@ -177,86 +122,7 @@ static void core_log(enum retro_log_level level, const char* fmt, ...)
 		exit(EXIT_FAILURE);
 }
 
-GLuint fbo = 0xffffffff;
 
-static uintptr_t core_video_get_current_framebuffer()
-{
-    printf("core_video_get_current_framebuffer\n");
-    throw std::exception();
-
-#if 0
-    if (fbo == 0xffffffff)
-    {
-        EGLint img_attrs[] = {
-            EGL_WIDTH, surface->Width(),
-            EGL_HEIGHT, surface->Height(),
-            EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_ABGR8888,
-            EGL_DMA_BUF_PLANE0_FD_EXT, surface->PrimeFD(),
-            EGL_DMA_BUF_PLANE0_OFFSET_EXT, 0,
-            EGL_DMA_BUF_PLANE0_PITCH_EXT, surface->Stride(),
-            EGL_NONE
-        };
-
-        EGLImageKHR image = eglCreateImageKHR(context3D->EglDisplay(),
-            EGL_NO_CONTEXT,
-            EGL_LINUX_DMA_BUF_EXT,
-            0,
-            img_attrs);
-        if (image == EGL_NO_IMAGE)
-        {
-            abort();
-        }
-
-        printf("IMAGE: image=%p\n", image);
-
-        glGetError();
-
-        // Texture
-        glEnable(GL_TEXTURE_2D);
-        //GL_CheckError();
-
-        GLuint texture2D;
-        glGenTextures(1, &texture2D);
-        //GL_CheckError();
-
-        glActiveTexture(GL_TEXTURE0);
-        //GL_CheckError();
-
-        glBindTexture(GL_TEXTURE_2D, texture2D);
-        //GL_CheckError();
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //GL_CheckError();
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        //GL_CheckError();
-
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
-        //GL_CheckError();
-
-        // GLuint colorBuffer;
-        // glGenRenderbuffers(1, &colorBuffer);
-        // glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-        // glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, 480, 320);
-
-        GLuint depthStencilBuffer;
-        glGenRenderbuffers(1, &depthStencilBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, 480, 320);
-
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture2D, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer);
-
-        glViewport(0, 0, surface->Width(), surface->Height());
-    }
-#endif
-
-    return fbo;
-}
 
 static const char* test_value = "UNIBIOS";
 
@@ -359,64 +225,7 @@ static bool core_environment(unsigned cmd, void* data)
 	return true;
 }
 
-static void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
-{
-    //printf("core_video_refresh: width=%d, height=%d, pitch=%d (format=%d)\n", width, height, pitch, format);
 
-    if (isOpenGL)
-    {
-        throw std::exception();
-    }
-    else
-    {
-        uint8_t* src = (uint8_t*)data;
-        uint8_t* dst = (uint8_t*)go2_surface_map(surface);
-        int bpp = go2_drm_format_get_bpp(go2_surface_format_get(surface)) / 8;
-
-        int yy = height;
-        while(yy > 0)
-        {
-            memcpy(dst, src, width * bpp);
-            
-            src += pitch;
-            dst += go2_surface_stride_get(surface);
-            
-            --yy;
-        }
-
-        // go2_surface_blit(surface, 0, 0, width, height,
-        //                  display_surface, 0, 0, go2_display_width_get(display), go2_display_height_get(display),
-        //                  GO2_ROTATION_DEGREES_270);
-
-        int x;
-        int y;
-        int w;
-        int h;
-        if (aspect_ratio >= 1.0f)
-        {
-            h = go2_display_width_get(display);
-            
-            w = h * aspect_ratio;
-            w = (w > go2_display_height_get(display)) ? go2_display_height_get(display) : w;
-
-            x = (go2_display_height_get(display) / 2) - (w / 2);
-            y = 0;
-        }
-        else
-        {
-            x = 0;
-            y = 0;
-            w = go2_display_height_get(display);
-            h = go2_display_width_get(display);
-        }
-
-        go2_presenter_post(presenter,
-                           surface,
-                           0, 0, width, height,
-                           y, x, h, w,
-                           GO2_ROTATION_DEGREES_270);
-    }
-}
 
 
 
@@ -745,9 +554,7 @@ int main(int argc, char *argv[])
     return 0;
 #endif
 
-	display = go2_display_create();
-	
-    presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
+
 
     input = go2_input_create();
 
