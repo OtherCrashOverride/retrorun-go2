@@ -1,11 +1,11 @@
 #include "video.h"
+#include "audio.h"
 
 #include <unistd.h>
 
 
 
 #include <go2/queue.h>
-#include <go2/audio.h>
 #include <go2/input.h>
 
 
@@ -32,7 +32,7 @@
 
 
 
-go2_audio_t* audio;
+
 
 static go2_gamepad_t gamepadState;
 go2_input_t* input;
@@ -79,19 +79,7 @@ static struct {
 
 
 
-static void audio_init(int freq)
-{
-    // Note: audio stutters in OpenAL unless the buffer frequency at upload
-    // is the same as during creation.
-    audio = go2_audio_create(freq);
 
-    printf("audio_init: freq=%d\n", freq);
-}
-
-static void audio_deinit()
-{
-
-}
 
 static void core_log(enum retro_log_level level, const char* fmt, ...)
 {
@@ -326,18 +314,6 @@ static int16_t core_input_state(unsigned port, unsigned device, unsigned index, 
     }
 
     return result;
-}
-
-static void core_audio_sample(int16_t left, int16_t right)
-{
-	// (void)left;
-	// (void)right;
-}
-
-static size_t core_audio_sample_batch(const int16_t * data, size_t frames)
-{
-	go2_audio_submit(audio, (const short*)data, frames);
-	return 0;
 }
 
 static void core_load(const char* sofile)
