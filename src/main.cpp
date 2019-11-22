@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <exception>
+#include <getopt.h>
 
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
@@ -24,6 +25,18 @@
 
 
 retro_hw_context_reset_t retro_context_reset;
+
+const char* opt_savedir = ".";
+const char* opt_systemdir = ".";
+float opt_aspect = 0.0f;
+const char* arg_core = "";
+const char* arg_rom = "";
+
+struct option longopts[] = {
+	{ "savedir", required_argument, NULL, 's' },
+    { "systemdir", required_argument, NULL, 'd' },
+    { "aspect", required_argument, NULL, 'a' },
+    { 0, 0, 0, 0 }};
 
 
 static struct {
@@ -139,8 +152,11 @@ static bool core_environment(unsigned cmd, void* data)
         }
 
         case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+            *(const char**)data = opt_systemdir;
+            return true;
+
         case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-            * (const char * * ) data = ".";
+            *(const char**)data = opt_savedir;
             return true;
 
         case RETRO_ENVIRONMENT_SET_HW_RENDER:
@@ -328,6 +344,31 @@ static const char* FileNameFromPath(const char* fullpath)
     return ptr;   
 }
 
+static char* PathCombine(const char* path, const char* filename)
+{
+    int len = strlen(path);
+    int total_len = len + strlen(filename);
+
+    char* result = NULL;
+
+    if (path[len-1] != '/')
+    {
+        ++total_len;
+        result = (char*)calloc(total_len + 1, 1);
+        strcpy(result, path);
+        strcat(result, "/");
+        strcat(result, filename);
+    }
+    else
+    {
+        result = (char*)calloc(total_len + 1, 1);
+        strcpy(result, path);
+        strcat(result, filename);
+    }
+    
+    return result;
+}
+
 static int LoadState(const char* saveName)
 {
     FILE* file = fopen(saveName, "rb");
@@ -391,6 +432,8 @@ int main(int argc, char *argv[])
 
 
     // Init
+#if 0
+
 	if (argc < 3)
     {
 		printf("Usage: %s <core> <game>", argv[0]);
@@ -399,16 +442,73 @@ int main(int argc, char *argv[])
 
 	core_load(argv[1]);
     core_load_game(argv[2]);
-    
 
-    const char* fileName = FileNameFromPath(argv[2]);
+#else
+
+    int c;
+    int option_index = 0;
+
+	while ((c = getopt_long(argc, argv, "s:d:a:", longopts, &option_index)) != -1)
+	{
+		switch (c)
+		{
+			case 's':
+				opt_savedir = optarg;
+				break;
+
+			case 'd':
+				opt_systemdir = optarg;
+				break;
+
+			case 'a':
+				opt_aspect = atof(optarg);
+				break;
+
+			default:
+				printf("Unknown option. '%s'\n", longopts[option_index].name);
+                exit(EXIT_FAILURE);
+		}
+	}
+
+    printf("opt_save='%s', opt_systemdir='%s', opt_aspect=%f\n", opt_savedir, opt_systemdir, opt_aspect);
+
+
+    int remaining_args = argc - optind;
+    int remaining_index = optind;
+    printf("remaining_args=%d\n", remaining_args);
+
+    if (remaining_args < 2)
+    {
+		printf("Usage: %s [-s savedir] [-d systemdir] [-a aspect] core rom", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    //return 0;
+    if (optind < argc)
+    {
+        printf ("non-option ARGV-elements: ");
+        while (optind < argc)
+            printf ("%s ", argv[optind++]);
+        putchar ('\n');
+    }
+
+    arg_core = argv[remaining_index++];
+    arg_rom = argv[remaining_index++];
+
+	core_load(arg_core);
+    core_load_game(arg_rom);
+
+#endif
+
+    const char* fileName = FileNameFromPath(arg_rom);
     
     char* saveName = (char*)malloc(strlen(fileName) + 4 + 1);
     strcpy(saveName, fileName);
     strcat(saveName, ".sav");
 
-    printf("saveName='%s'\n", saveName);
-    LoadState(saveName);
+    char* savePath = PathCombine(opt_savedir, saveName);
+    printf("savePath='%s'\n", savePath);
+    LoadState(savePath);
 
 
     printf("Entering render loop.\n");
@@ -422,7 +522,8 @@ int main(int argc, char *argv[])
         g_retro.retro_run();
     }
 
-    SaveState(saveName);
+    SaveState(savePath);
+    free(savePath);
 
     return 0;
 }

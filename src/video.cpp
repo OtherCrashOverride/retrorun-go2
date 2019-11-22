@@ -20,6 +20,8 @@
 
 #define ALIGN(val, align)	(((val) + (align) - 1) & ~((align) - 1))
 
+extern float opt_aspect;
+
 
 go2_display_t* display;
 go2_surface_t* surface;
@@ -71,7 +73,7 @@ void video_configure(const struct retro_game_geometry* geom)
         }
         
 
-        aspect_ratio = geom->aspect_ratio;        
+        aspect_ratio = opt_aspect == 0.0f ? geom->aspect_ratio : opt_aspect;
         //printf("video_configure: rect=%d, %d, %d, %d\n", y, x, h, w);
     }
 }
