@@ -181,6 +181,8 @@ static bool core_environment(unsigned cmd, void* data)
         case RETRO_ENVIRONMENT_GET_VARIABLE:
         {
             retro_variable* var = (retro_variable*)data;
+            printf("ENV_VAR: %s\n", var->key);
+
             if (strcmp(var->key, "fbneo-neogeo-mode") == 0)
             {
                 var->value = "UNIBIOS";
@@ -196,6 +198,12 @@ static bool core_environment(unsigned cmd, void* data)
                 var->value = "5200";
                 return true;
             }
+            else if (strcmp(var->key, "mgba_sgb_borders") == 0)
+            {
+                var->value = "OFF";
+                return true;
+            }
+
             return false;
         }
 
