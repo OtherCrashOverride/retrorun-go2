@@ -1,5 +1,6 @@
 #include "input.h"
 
+#include "video.h"
 #include "libretro.h"
 
 #include <go2/input.h>
@@ -9,6 +10,7 @@ bool input_exit_requested = false;
 
 
 static go2_gamepad_t gamepadState;
+static go2_gamepad_t prevGamepadState;
 static go2_input_t* input;
 
 
@@ -25,6 +27,13 @@ void core_input_poll(void)
     {
         input_exit_requested = true;
     }
+
+    if (!prevGamepadState.buttons.f2 && gamepadState.buttons.f2)
+    {
+        screenshot_requested = true;
+    }
+
+    prevGamepadState = gamepadState;
 }
 
 int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id)

@@ -9,6 +9,7 @@ extern bool isOpenGL;
 extern int GLContextMajor;
 extern int GLContextMinor;
 extern int hasStencil;
+extern bool screenshot_requested;
 
 void video_configure(const struct retro_game_geometry* geom);
 void video_deinit();

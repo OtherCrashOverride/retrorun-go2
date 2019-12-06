@@ -35,6 +35,7 @@ bool isOpenGL = false;
 int GLContextMajor = 0;
 int GLContextMinor = 0;
 int hasStencil = false;
+bool screenshot_requested = false;
 
 extern retro_hw_context_reset_t retro_context_reset;
 
@@ -138,6 +139,30 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             y = 0;
             w = go2_display_height_get(display);
             h = go2_display_width_get(display);
+        }
+
+        if (screenshot_requested)
+        {
+            printf("Screenshot.\n");
+
+            int ss_w = go2_surface_width_get(surface);
+            int ss_h = go2_surface_height_get(surface);
+            go2_surface_t* screenshot = go2_surface_create(display, ss_w, ss_h, DRM_FORMAT_RGB888);
+            if (!screenshot)
+            {
+                printf("go2_surface_create failed.\n");
+                throw std::exception();
+            }
+
+            go2_surface_blit(surface, 0, 0, ss_w, ss_h,
+                             screenshot, 0, 0, ss_w, ss_h,
+                             GO2_ROTATION_DEGREES_0);
+
+            go2_surface_save_as_png(screenshot, "ScreenShot.png");
+
+            go2_surface_destroy(screenshot);
+            
+            screenshot_requested = false;
         }
 
         go2_presenter_post(presenter,
