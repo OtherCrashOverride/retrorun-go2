@@ -21,7 +21,7 @@
 #define ALIGN(val, align)	(((val) + (align) - 1) & ~((align) - 1))
 
 extern float opt_aspect;
-
+extern int opt_backlight;
 
 go2_display_t* display;
 go2_surface_t* surface;
@@ -51,6 +51,10 @@ void video_configure(const struct retro_game_geometry* geom)
     display = go2_display_create();
     presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
 
+    if (opt_backlight > -1)
+    {
+        go2_display_backlight_set(display, (uint32_t)opt_backlight);
+    }
 
     if (isOpenGL)
     {
@@ -161,7 +165,7 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             go2_surface_save_as_png(screenshot, "ScreenShot.png");
 
             go2_surface_destroy(screenshot);
-            
+
             screenshot_requested = false;
         }
 

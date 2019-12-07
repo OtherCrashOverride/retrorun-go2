@@ -29,6 +29,7 @@ retro_hw_context_reset_t retro_context_reset;
 const char* opt_savedir = ".";
 const char* opt_systemdir = ".";
 float opt_aspect = 0.0f;
+int opt_backlight = -1;
 const char* arg_core = "";
 const char* arg_rom = "";
 
@@ -36,6 +37,7 @@ struct option longopts[] = {
 	{ "savedir", required_argument, NULL, 's' },
     { "systemdir", required_argument, NULL, 'd' },
     { "aspect", required_argument, NULL, 'a' },
+    { "backlight", required_argument, NULL, 'b' },
     { 0, 0, 0, 0 }};
 
 
@@ -456,7 +458,7 @@ int main(int argc, char *argv[])
     int c;
     int option_index = 0;
 
-	while ((c = getopt_long(argc, argv, "s:d:a:", longopts, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "s:d:a:b:", longopts, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -471,6 +473,10 @@ int main(int argc, char *argv[])
 			case 'a':
 				opt_aspect = atof(optarg);
 				break;
+
+            case 'b':
+                opt_backlight = atoi(optarg);
+                break;
 
 			default:
 				printf("Unknown option. '%s'\n", longopts[option_index].name);
