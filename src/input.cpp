@@ -9,8 +9,8 @@
 bool input_exit_requested = false;
 
 
-static go2_gamepad_t gamepadState;
-static go2_gamepad_t prevGamepadState;
+static go2_gamepad_state_t gamepadState;
+static go2_gamepad_state_t prevGamepadState;
 static go2_input_t* input;
 
 
@@ -21,7 +21,7 @@ void core_input_poll(void)
         input = go2_input_create();
     }
 
-	go2_input_read(input, &gamepadState);
+	go2_input_gamepad_read(input, &gamepadState);
 
     if (gamepadState.buttons.f1)
     {
