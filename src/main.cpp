@@ -35,6 +35,7 @@ const char* opt_savedir = ".";
 const char* opt_systemdir = ".";
 float opt_aspect = 0.0f;
 int opt_backlight = -1;
+int opt_volume = -1;
 const char* arg_core = "";
 const char* arg_rom = "";
 
@@ -43,6 +44,7 @@ struct option longopts[] = {
     { "systemdir", required_argument, NULL, 'd' },
     { "aspect", required_argument, NULL, 'a' },
     { "backlight", required_argument, NULL, 'b' },
+    { "volume", required_argument, NULL, 'v' },
     { 0, 0, 0, 0 }};
 
 
@@ -463,7 +465,7 @@ int main(int argc, char *argv[])
     int c;
     int option_index = 0;
 
-	while ((c = getopt_long(argc, argv, "s:d:a:b:", longopts, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "s:d:a:b:v:", longopts, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -481,6 +483,10 @@ int main(int argc, char *argv[])
 
             case 'b':
                 opt_backlight = atoi(optarg);
+                break;
+            
+            case 'v':
+                opt_volume = atoi(optarg);
                 break;
 
 			default:

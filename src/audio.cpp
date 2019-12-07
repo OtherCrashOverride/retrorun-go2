@@ -7,6 +7,10 @@
 
 #define FRAMES_MAX (48000)
 #define CHANNELS (2)
+
+extern int opt_volume;
+
+
 static go2_audio_t* audio;
 static u_int16_t audioBuffer[FRAMES_MAX * CHANNELS];
 static int audioFrameCount;
@@ -21,6 +25,11 @@ void audio_init(int freq)
     audioFrameLimit = 1.0 / 60.0 * freq;
 
     //printf("audio_init: freq=%d\n", freq);
+
+    if (opt_volume > -1)
+    {
+        go2_audio_volume_set(audio, (uint32_t) opt_volume);
+    }
 }
 
 void audio_deinit()
