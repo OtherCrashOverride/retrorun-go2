@@ -22,6 +22,11 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <drm/drm_fourcc.h>
+#include <sys/time.h>
+#include <go2/input.h>
+
+
+extern go2_battery_state_t batteryState;
 
 
 retro_hw_context_reset_t retro_context_reset;
@@ -527,13 +532,38 @@ int main(int argc, char *argv[])
 
     printf("Entering render loop.\n");
 
+    const char* batteryStateDesc[] = { "UNK", "DSC", "CHG", "FUL" };
+
+    struct timeval startTime;
+    struct timeval endTime;
+    double elapsed = 0;
+    int totalFrames = 0;
     bool isRunning = true;
     while(isRunning)
-    {                
+    {
+        gettimeofday(&startTime, NULL);
+
         if (input_exit_requested)
             isRunning = false;
 
         g_retro.retro_run();
+        
+        gettimeofday(&endTime, NULL);
+        ++totalFrames;
+
+        double seconds = (endTime.tv_sec - startTime.tv_sec);
+	    double milliseconds = ((double)(endTime.tv_usec - startTime.tv_usec)) / 1000000.0;
+
+        elapsed += seconds + milliseconds;
+
+        if (elapsed >= 1.0)
+        {
+            int fps = (int)(totalFrames / elapsed);
+            printf("FPS: %i, BATT: %d [%s]\n", fps, batteryState.level, batteryStateDesc[batteryState.status]);
+
+            totalFrames = 0;
+            elapsed = 0;
+        }
     }
 
     SaveState(savePath);

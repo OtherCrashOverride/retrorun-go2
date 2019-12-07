@@ -7,7 +7,7 @@
 
 
 bool input_exit_requested = false;
-
+go2_battery_state_t batteryState;
 
 static go2_gamepad_state_t gamepadState;
 static go2_gamepad_state_t prevGamepadState;
@@ -22,6 +22,7 @@ void core_input_poll(void)
     }
 
 	go2_input_gamepad_read(input, &gamepadState);
+    go2_input_battery_read(input, &batteryState);
 
     if (gamepadState.buttons.f1)
     {
