@@ -107,6 +107,8 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     }
     else
     {
+        if (!data) return;
+        
         uint8_t* src = (uint8_t*)data;
         uint8_t* dst = (uint8_t*)go2_surface_map(surface);
         int bpp = go2_drm_format_get_bpp(go2_surface_format_get(surface)) / 8;
