@@ -1,6 +1,3 @@
-#pragma once
-
-/*
 retrorun-go2 - libretro frontend for the ODROID-GO Advance
 Copyright (C) 2020  OtherCrashOverride
 
@@ -17,14 +14,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
-
-#include <stdint.h>
-#include <stdbool.h>
-
-
-extern bool input_exit_requested;
-
-
-void core_input_poll(void);
-int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id);

@@ -1,3 +1,22 @@
+/*
+retrorun-go2 - libretro frontend for the ODROID-GO Advance
+Copyright (C) 2020  OtherCrashOverride
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 #include "video.h"
 
 #include "libretro.h"
@@ -108,7 +127,7 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     else
     {
         if (!data) return;
-        
+
         uint8_t* src = (uint8_t*)data;
         uint8_t* dst = (uint8_t*)go2_surface_map(surface);
         int bpp = go2_drm_format_get_bpp(go2_surface_format_get(surface)) / 8;
