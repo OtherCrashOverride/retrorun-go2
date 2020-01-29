@@ -55,8 +55,10 @@ const char* opt_systemdir = ".";
 float opt_aspect = 0.0f;
 int opt_backlight = -1;
 int opt_volume = -1;
+bool opt_restart = false;
 const char* arg_core = "";
 const char* arg_rom = "";
+
 
 struct option longopts[] = {
 	{ "savedir", required_argument, NULL, 's' },
@@ -64,6 +66,7 @@ struct option longopts[] = {
     { "aspect", required_argument, NULL, 'a' },
     { "backlight", required_argument, NULL, 'b' },
     { "volume", required_argument, NULL, 'v' },
+    { "restart", no_argument, NULL, 'r' },
     { 0, 0, 0, 0 }};
 
 
@@ -484,7 +487,7 @@ int main(int argc, char *argv[])
     int c;
     int option_index = 0;
 
-	while ((c = getopt_long(argc, argv, "s:d:a:b:v:", longopts, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "s:d:a:b:v:r", longopts, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -506,6 +509,10 @@ int main(int argc, char *argv[])
             
             case 'v':
                 opt_volume = atoi(optarg);
+                break;
+
+            case 'r':
+                opt_restart = true;
                 break;
 
 			default:
@@ -552,7 +559,16 @@ int main(int argc, char *argv[])
 
     char* savePath = PathCombine(opt_savedir, saveName);
     printf("savePath='%s'\n", savePath);
-    LoadState(savePath);
+    
+    if (opt_restart)
+    {
+        printf("Restarting.\n");
+    }
+    else
+    {
+        printf("Loading.\n");
+        LoadState(savePath);
+    }
 
 
     printf("Entering render loop.\n");
