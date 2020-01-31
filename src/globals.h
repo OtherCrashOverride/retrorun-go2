@@ -1,0 +1,11 @@
+#pragma once
+
+enum RETRORUN_CORE_TYPE
+{
+    RETRORUN_CORE_UNKNOWN = 0,
+    RETRORUN_CORE_ATARI800,
+    RETRORUN_CORE_MGBA
+};
+
+extern RETRORUN_CORE_TYPE RetrorunCore;
+extern bool RetrorunUseAnalogStick;
