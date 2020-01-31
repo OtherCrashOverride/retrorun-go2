@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "input.h"
 
+#include "globals.h"
 #include "video.h"
 #include "libretro.h"
 
@@ -58,20 +59,21 @@ void core_input_poll(void)
 
 int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-    int16_t result;
+    //int16_t result;
 
-    if (port || index || device != RETRO_DEVICE_JOYPAD)
-            return 0;
+    // if (port || index || device != RETRO_DEVICE_JOYPAD)
+    //         return 0;
 
-#if 1
-    // Map thumbstick to dpad
-    const float TRIM = 0.35f;
-    
-    if (gamepadState.thumb.y < -TRIM) gamepadState.dpad.up = ButtonState_Pressed;
-    if (gamepadState.thumb.y > TRIM) gamepadState.dpad.down = ButtonState_Pressed;
-    if (gamepadState.thumb.x < -TRIM) gamepadState.dpad.left = ButtonState_Pressed;
-    if (gamepadState.thumb.x > TRIM) gamepadState.dpad.right = ButtonState_Pressed;
-#endif
+    if (!Retrorun_UseAnalogStick)
+    {
+        // Map thumbstick to dpad
+        const float TRIM = 0.35f;
+        
+        if (gamepadState.thumb.y < -TRIM) gamepadState.dpad.up = ButtonState_Pressed;
+        if (gamepadState.thumb.y > TRIM) gamepadState.dpad.down = ButtonState_Pressed;
+        if (gamepadState.thumb.x < -TRIM) gamepadState.dpad.left = ButtonState_Pressed;
+        if (gamepadState.thumb.x > TRIM) gamepadState.dpad.right = ButtonState_Pressed;
+    }
 
 /*
 #define RETRO_DEVICE_ID_JOYPAD_B        0
@@ -92,60 +94,84 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
 #define RETRO_DEVICE_ID_JOYPAD_R3      15
 */
 
-    switch (id)
+    if (port == 0)
     {
-    case RETRO_DEVICE_ID_JOYPAD_B:
-        return gamepadState.buttons.b;
-        break;
-    
-    case RETRO_DEVICE_ID_JOYPAD_Y:
-        return gamepadState.buttons.y;
-        break;
+        if (device == RETRO_DEVICE_JOYPAD)
+        {
+            switch (id)
+            {
+                case RETRO_DEVICE_ID_JOYPAD_B:
+                    return gamepadState.buttons.b;
+                    break;
+                
+                case RETRO_DEVICE_ID_JOYPAD_Y:
+                    return gamepadState.buttons.y;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_SELECT:
-        return gamepadState.buttons.f3;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_SELECT:
+                    return gamepadState.buttons.f3;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_START:
-        return gamepadState.buttons.f4;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_START:
+                    return gamepadState.buttons.f4;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_UP:
-        return gamepadState.dpad.up;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_UP:
+                    return gamepadState.dpad.up;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_DOWN:
-        return gamepadState.dpad.down;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_DOWN:
+                    return gamepadState.dpad.down;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_LEFT:
-        return gamepadState.dpad.left;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_LEFT:
+                    return gamepadState.dpad.left;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_RIGHT:
-        return gamepadState.dpad.right;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_RIGHT:
+                    return gamepadState.dpad.right;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_A:
-        return gamepadState.buttons.a;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_A:
+                    return gamepadState.buttons.a;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_X:
-        return gamepadState.buttons.x;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_X:
+                    return gamepadState.buttons.x;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_L:
-        return gamepadState.buttons.top_left;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_L:
+                    return gamepadState.buttons.top_left;
+                    break;
 
-    case RETRO_DEVICE_ID_JOYPAD_R:
-        return gamepadState.buttons.top_right;
-        break;
+                case RETRO_DEVICE_ID_JOYPAD_R:
+                    return gamepadState.buttons.top_right;
+                    break;
 
-    default:
-        result = 0;
-        break;
+                default:
+                    return 0;
+                    break;
+            }
+        }
+        else if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
+        {
+            switch (id)
+            {
+                case RETRO_DEVICE_ID_ANALOG_X:
+                    return gamepadState.thumb.x * 0x7fff;
+                    break;
+                
+                case RETRO_DEVICE_ID_JOYPAD_Y:
+                    return gamepadState.thumb.y * 0x7fff;
+                    break;
+                    
+                default:
+                    return 0;
+                    break;
+            }
+        }
+        
     }
 
-    return result;
+    return 0;
 }
