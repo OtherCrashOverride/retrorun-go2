@@ -46,6 +46,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <go2/input.h>
 
 
+#define RETRO_DEVICE_ATARI_JOYSTICK RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+
+
 extern go2_battery_state_t batteryState;
 
 
@@ -302,6 +305,17 @@ static void core_load(const char* sofile)
 	printf("Core loaded\n");
 
     g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
+
+    struct retro_system_info system = {
+		0, 0, 0, false, false
+	};
+    g_retro.retro_get_system_info(&system);
+
+    if (strcmp(system.library_name, "atari800"))
+    {
+        Retrorun_Core = RETRORUN_CORE_ATARI800;
+        g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_ATARI_JOYSTICK);
+    }
 }
 
 static void core_load_game(const char * filename)

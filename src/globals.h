@@ -7,5 +7,5 @@ enum RETRORUN_CORE_TYPE
     RETRORUN_CORE_MGBA
 };
 
-extern RETRORUN_CORE_TYPE RetrorunCore;
-extern bool RetrorunUseAnalogStick;
+extern RETRORUN_CORE_TYPE Retrorun_Core;
+extern bool Retrorun_UseAnalogStick;
