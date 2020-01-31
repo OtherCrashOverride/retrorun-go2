@@ -298,7 +298,7 @@ static void core_load(const char* sofile)
 	g_retro.retro_init();
 	g_retro.initialized = true;
 
-	puts("Core loaded");
+	printf("Core loaded\n");
 
     g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
 }
@@ -343,7 +343,7 @@ static void core_load_game(const char * filename)
 
 	if (!g_retro.retro_load_game( & info))
     {
-		printf("The core failed to load the content.");
+		printf("The core failed to load the content.\n");
         abort();
     }
 
@@ -354,7 +354,7 @@ static void core_load_game(const char * filename)
 	return;
 
 	libc_error:
-		printf("Failed to load content '%s'", filename);
+		printf("Failed to load content '%s'\n", filename);
         abort();
 }
 
