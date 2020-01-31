@@ -58,8 +58,14 @@ void audio_deinit()
 
 void core_audio_sample(int16_t left, int16_t right)
 {
-	// (void)left;
-	// (void)right;
+	u_int32_t* ptr = (u_int32_t*)audioBuffer;
+    ptr[audioFrameCount++] = (left << 16) | right;
+
+    if (audioFrameCount >= audioFrameLimit)
+    {
+        go2_audio_submit(audio, (const short*)audioBuffer, audioFrameCount);
+        audioFrameCount = 0;
+    }
 }
 
 size_t core_audio_sample_batch(const int16_t * data, size_t frames)
