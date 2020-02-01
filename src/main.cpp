@@ -311,7 +311,7 @@ static void core_load(const char* sofile)
 	};
     g_retro.retro_get_system_info(&system);
 
-    if (strcmp(system.library_name, "atari800"))
+    if (strcmp(system.library_name, "atari800") == 0)
     {
         Retrorun_Core = RETRORUN_CORE_ATARI800;
         g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_ATARI_JOYSTICK);
