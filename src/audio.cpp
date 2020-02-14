@@ -34,6 +34,7 @@ static go2_audio_t* audio;
 static u_int16_t audioBuffer[FRAMES_MAX * CHANNELS];
 static int audioFrameCount;
 static int audioFrameLimit;
+static int prevVolume;
 
 void audio_init(int freq)
 {
@@ -49,6 +50,11 @@ void audio_init(int freq)
     {
         go2_audio_volume_set(audio, (uint32_t) opt_volume);
     }
+    else
+    {
+        opt_volume = go2_audio_volume_get(audio);
+    }
+    prevVolume = opt_volume;
 }
 
 void audio_deinit()
@@ -56,8 +62,19 @@ void audio_deinit()
 
 }
 
+static void SetVolume()
+{
+    if (opt_volume != prevVolume)
+    {
+        go2_audio_volume_set(audio, (uint32_t) opt_volume);
+        prevVolume = opt_volume;
+    }
+}
+
 void core_audio_sample(int16_t left, int16_t right)
 {
+    SetVolume();
+
 	u_int32_t* ptr = (u_int32_t*)audioBuffer;
     ptr[audioFrameCount++] = (left << 16) | right;
 
@@ -70,6 +87,8 @@ void core_audio_sample(int16_t left, int16_t right)
 
 size_t core_audio_sample_batch(const int16_t * data, size_t frames)
 {
+    SetVolume();
+
     if (audioFrameCount + frames > audioFrameLimit)
     {
         go2_audio_submit(audio, (const short*)audioBuffer, audioFrameCount);

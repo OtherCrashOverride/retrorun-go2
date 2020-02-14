@@ -55,6 +55,7 @@ int GLContextMajor = 0;
 int GLContextMinor = 0;
 int hasStencil = false;
 bool screenshot_requested = false;
+int prevBacklight;
 
 extern retro_hw_context_reset_t retro_context_reset;
 
@@ -70,10 +71,17 @@ void video_configure(const struct retro_game_geometry* geom)
     display = go2_display_create();
     presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
 
+
     if (opt_backlight > -1)
     {
         go2_display_backlight_set(display, (uint32_t)opt_backlight);
     }
+    else
+    {
+        opt_backlight = go2_display_backlight_get(display);
+    }
+    prevBacklight = opt_backlight;    
+
 
     if (isOpenGL)
     {
@@ -119,6 +127,14 @@ uintptr_t core_video_get_current_framebuffer()
 void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
 {
     //printf("core_video_refresh: width=%d, height=%d, pitch=%d (format=%d)\n", width, height, pitch, format);
+
+    if (opt_backlight != prevBacklight)
+    {
+        go2_display_backlight_set(display, (uint32_t)opt_backlight);
+        prevBacklight = opt_backlight;
+
+        printf("Backlight = %d\n", opt_backlight);
+    }
 
     if (isOpenGL)
     {

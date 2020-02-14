@@ -24,7 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "libretro.h"
 
 #include <go2/input.h>
+#include <stdio.h>
 
+
+extern int opt_backlight;
+extern int opt_volume;
 
 bool input_exit_requested = false;
 go2_battery_state_t batteryState;
@@ -52,6 +56,39 @@ void core_input_poll(void)
     if (!prevGamepadState.buttons.f2 && gamepadState.buttons.f2)
     {
         screenshot_requested = true;
+    }
+
+    if (gamepadState.buttons.f4)
+    {
+        if (gamepadState.dpad.up && !prevGamepadState.dpad.up)
+        {
+            opt_backlight += 10;
+            if (opt_backlight > 100) opt_backlight = 100;
+            
+            printf("Backlight+ = %d\n", opt_backlight);
+        }
+        else if (gamepadState.dpad.down && !prevGamepadState.dpad.down)
+        {
+            opt_backlight -= 10;
+            if (opt_backlight < 1) opt_backlight = 1;
+
+            printf("Backlight- = %d\n", opt_backlight);
+        }
+
+        if (gamepadState.dpad.right && !prevGamepadState.dpad.right)
+        {
+            opt_volume += 5;
+            if (opt_volume > 100) opt_volume = 100;
+
+            printf("Volume+ = %d\n", opt_volume);
+        }
+        else if (gamepadState.dpad.left && !prevGamepadState.dpad.left)
+        {
+            opt_volume -= 5;
+            if (opt_volume < 0) opt_volume = 0;
+
+            printf("Volume- = %d\n", opt_volume);
+        }
     }
 
     prevGamepadState = gamepadState;
