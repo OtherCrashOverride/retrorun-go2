@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
         LoadState(savePath);
     }
 
-    LoadSram(sramName);
+    LoadSram(sramPath);
 
 
     printf("Entering render loop.\n");
@@ -690,11 +690,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    SaveSram(sramName);
+    SaveSram(sramPath);
+    free(sramPath);
     free(sramName);
 
     SaveState(savePath);
     free(savePath);
+    free(saveName);
 
     return 0;
 }
