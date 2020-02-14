@@ -95,8 +95,8 @@ static struct {
 	//	bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info);
 	void (*retro_unload_game)(void);
 	//	unsigned retro_get_region(void);
-	//	void *retro_get_memory_data(unsigned id);
-	//	size_t retro_get_memory_size(unsigned id);
+	void* (*retro_get_memory_data)(unsigned id);
+	size_t (*retro_get_memory_size)(unsigned id);
 } g_retro;
 
 
@@ -283,7 +283,8 @@ static void core_load(const char* sofile)
 	load_retro_sym(retro_serialize_size);
 	load_retro_sym(retro_serialize);
 	load_retro_sym(retro_unserialize);
-
+    load_retro_sym(retro_get_memory_data);
+    load_retro_sym(retro_get_memory_size);
 
 	load_sym(set_environment, retro_set_environment);
 	load_sym(set_video_refresh, retro_set_video_refresh);
@@ -454,6 +455,38 @@ static int LoadState(const char* saveName)
     return 0;
 }
 
+static int LoadSram(const char* saveName)
+{
+    FILE* file = fopen(saveName, "rb");
+	if (!file)
+		return -1;
+
+	fseek(file, 0, SEEK_END);
+	long size = ftell(file);
+	rewind(file);
+
+    size_t sramSize = g_retro.retro_get_memory_size(0);
+    if (size < 1) return -1;
+    if (size != sramSize)
+    {
+        printf("LoadSram: File size mismatch (%d != %d)\n", size, sramSize);
+        return -1;
+    }
+
+    void* ptr = g_retro.retro_get_memory_data(0);
+    if (!ptr) abort();
+
+    size_t count = fread(ptr, 1, size, file);
+    if ((size_t)size != count)
+    {
+        abort();
+    }
+
+    fclose(file);
+
+    return 0;
+}
+
 static void SaveState(const char* saveName)
 {
     size_t size = g_retro.retro_serialize_size();
@@ -479,6 +512,30 @@ static void SaveState(const char* saveName)
 
     fclose(file);
     free(ptr);
+}
+
+static void SaveSram(const char* saveName)
+{
+    size_t size = g_retro.retro_get_memory_size(0);
+    if (size < 1) return;
+    
+    void* ptr = g_retro.retro_get_memory_data(0);
+    if (!ptr) abort();
+
+ 
+    FILE* file = fopen(saveName, "wb");
+	if (!file)
+    {
+		abort();
+    }
+
+    size_t count = fwrite(ptr, 1, size, file);
+    if (count != size)
+    {
+        abort();
+    }
+
+    fclose(file);
 }
 
 int main(int argc, char *argv[])
@@ -576,6 +633,14 @@ int main(int argc, char *argv[])
     char* savePath = PathCombine(opt_savedir, saveName);
     printf("savePath='%s'\n", savePath);
     
+    char* sramName = (char*)malloc(strlen(fileName) + 4 + 1);
+    strcpy(sramName, fileName);
+    strcat(sramName, ".srm");
+
+    char* sramPath = PathCombine(opt_savedir, sramName);
+    printf("sramPath='%s'\n", sramPath);
+
+
     if (opt_restart)
     {
         printf("Restarting.\n");
@@ -585,6 +650,8 @@ int main(int argc, char *argv[])
         printf("Loading.\n");
         LoadState(savePath);
     }
+
+    LoadSram(sramName);
 
 
     printf("Entering render loop.\n");
@@ -622,6 +689,9 @@ int main(int argc, char *argv[])
             elapsed = 0;
         }
     }
+
+    SaveSram(sramName);
+    free(sramName);
 
     SaveState(savePath);
     free(savePath);
