@@ -47,12 +47,14 @@ go2_surface_t* surface;
 go2_surface_t* display_surface;
 go2_frame_buffer_t* frame_buffer;
 go2_presenter_t* presenter;
+go2_context_t* context3D;
 float aspect_ratio;
 uint32_t color_format;
 
 bool isOpenGL = false;
 int GLContextMajor = 0;
 int GLContextMinor = 0;
+GLuint fbo;
 int hasStencil = false;
 bool screenshot_requested = false;
 int prevBacklight;
@@ -85,7 +87,83 @@ void video_configure(const struct retro_game_geometry* geom)
 
     if (isOpenGL)
     {
-        throw std::exception();
+        go2_context_attributes_t attr;
+        attr.major = 3;
+        attr.minor = 2;
+        attr.red_bits = 8;
+        attr.green_bits = 8;
+        attr.blue_bits = 8;
+        attr.alpha_bits = 8;
+        attr.depth_bits = 24;
+        attr.stencil_bits = 8;
+
+        context3D = go2_context_create(display, geom->base_width, geom->base_height, &attr);
+        go2_context_make_current(context3D);
+
+#if 0
+#if 0
+        GLuint colorBuffer;
+        glGenRenderbuffers(1, &colorBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, geom->max_width, geom->max_height);
+#else
+        surface = go2_surface_create(display, geom->max_width, geom->max_height, DRM_FORMAT_RGBA8888);
+        if (!surface)
+        {
+            printf("go2_surface_create failed.\n");
+            throw std::exception();
+        }
+
+        EGLint img_attrs[] = {
+            EGL_WIDTH, geom->max_width,
+            EGL_HEIGHT, geom->max_height,
+            EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_RGBA8888,
+            EGL_DMA_BUF_PLANE0_FD_EXT, go2_surface_prime_fd(surface),
+            EGL_DMA_BUF_PLANE0_OFFSET_EXT, 0,
+            EGL_DMA_BUF_PLANE0_PITCH_EXT, go2_surface_stride_get(surface),
+            EGL_NONE
+        };
+
+        PFNEGLCREATEIMAGEKHRPROC p_eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
+        if (!p_eglCreateImageKHR) abort();
+
+        EGLImageKHR image = p_eglCreateImageKHR((EGLDisplay)go2_context_egldisplay_get(context3D), EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, 0, img_attrs);
+        fprintf(stderr, "EGLImageKHR = %p\n", image);
+
+        GLuint texture2D;
+        glGenTextures(1, &texture2D);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture2D);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        PFNGLEGLIMAGETARGETTEXTURE2DOESPROC p_glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
+        if (!p_glEGLImageTargetTexture2DOES) abort();
+
+        p_glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);   
+#endif
+
+        GLuint depthBuffer;
+        glGenRenderbuffers(1, &depthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, geom->max_width, geom->max_height);
+
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+#if 0
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
+#else
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,	0, 0);
+#endif
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+        GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+        {
+            printf("FBO: Not Complete.\n");
+            throw std::exception();
+        }
+#endif
 
         retro_context_reset();
     }
@@ -118,27 +196,48 @@ void video_deinit()
 
 uintptr_t core_video_get_current_framebuffer()
 {
-    printf("core_video_get_current_framebuffer\n");
-    throw std::exception();
+    //printf("core_video_get_current_framebuffer\n");
 
-    //return fbo;
+    return 0; //fbo;
 }
 
 void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
 {
-    //printf("core_video_refresh: width=%d, height=%d, pitch=%d (format=%d)\n", width, height, pitch, format);
+    //printf("core_video_refresh: data=%p, width=%d, height=%d, pitch=%d\n", data, width, height, pitch);
 
     if (opt_backlight != prevBacklight)
     {
         go2_display_backlight_set(display, (uint32_t)opt_backlight);
         prevBacklight = opt_backlight;
 
-        printf("Backlight = %d\n", opt_backlight);
+        //printf("Backlight = %d\n", opt_backlight);
     }
 
     if (isOpenGL)
     {
-        throw std::exception();
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // glClear(GL_COLOR_BUFFER_BIT);
+
+        // // // Draw FBO
+
+        // // // Swap
+        go2_context_swap_buffers(context3D);
+
+        go2_surface_t* surface = go2_context_surface_lock(context3D);
+        go2_presenter_post(presenter,
+                    surface,
+                    0, 0, width, height,
+                    0, 0, 320, 480,
+                    GO2_ROTATION_DEGREES_270);
+        go2_context_surface_unlock(context3D, surface);
+ 
+        // go2_presenter_post(presenter,
+        //             surface,
+        //             0, 0, width, height,
+        //             0, 0, 320, 480,
+        //             GO2_ROTATION_DEGREES_270);
+
+        //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     }
     else
     {
