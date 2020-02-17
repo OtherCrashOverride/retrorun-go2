@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <exception>
 #include <getopt.h>
+#include <map>
+#include <vector>
 
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
@@ -63,6 +65,8 @@ bool opt_restart = false;
 const char* arg_core = "";
 const char* arg_rom = "";
 
+typedef std::map<std::string, std::string> varmap_t ;
+varmap_t variables;
 
 struct option longopts[] = {
 	{ "savedir", required_argument, NULL, 's' },
@@ -213,6 +217,31 @@ static bool core_environment(unsigned cmd, void* data)
             return true;
         }
 
+        case RETRO_ENVIRONMENT_SET_VARIABLES:
+        {
+            retro_variable* var = (retro_variable*)data;
+            while (var->key != NULL)
+            {
+                std::string key = var->key;
+
+                const char* start = strchr(var->value, ';');
+                start += 2;
+
+                std::string value;
+                while(*start != '|' && *start != 0)
+                {
+                    value += *start;
+                    ++start;
+                }
+
+                variables[key] = value;
+                printf("SET_VAR: %s=%s\n", key.c_str(), value.c_str());
+                ++var;
+            }
+
+            break;
+        }
+
         case RETRO_ENVIRONMENT_GET_VARIABLE:
         {
             retro_variable* var = (retro_variable*)data;
@@ -237,6 +266,18 @@ static bool core_environment(unsigned cmd, void* data)
             {
                 var->value = "OFF";
                 return true;
+            }
+            else
+            {
+                varmap_t::iterator iter = variables.find(var->key);
+                if (iter != variables.end())
+                {
+                    var->value = iter->second.c_str();
+                    printf("ENV_VAR (default): %s=%s\n", var->key, var->value);
+
+                    return true;
+                }
+
             }
 
             return false;
@@ -626,7 +667,7 @@ int main(int argc, char *argv[])
 
     // Overrides
     printf("Checking overrides.\n");
-    
+
     go2_gamepad_state_t gamepadState;
     input_gamepad_read(&gamepadState);
 
