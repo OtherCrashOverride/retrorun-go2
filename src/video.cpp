@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <GLES2/gl2ext.h>
 #include <drm/drm_fourcc.h>
 
-
+#define FBO_DIRECT 1
 #define ALIGN(val, align)	(((val) + (align) - 1) & ~((align) - 1))
 
 extern float opt_aspect;
@@ -85,40 +85,45 @@ void video_configure(const struct retro_game_geometry* geom)
     prevBacklight = opt_backlight;    
 
 
+    aspect_ratio = opt_aspect == 0.0f ? geom->aspect_ratio : opt_aspect;
+
     if (isOpenGL)
-    {
+    {        
         go2_context_attributes_t attr;
         attr.major = 3;
         attr.minor = 2;
-        attr.red_bits = 8;
-        attr.green_bits = 8;
-        attr.blue_bits = 8;
-        attr.alpha_bits = 8;
+        attr.red_bits = 5;
+        attr.green_bits = 6;
+        attr.blue_bits = 5;
+        attr.alpha_bits = 0;
         attr.depth_bits = 24;
         attr.stencil_bits = 8;
 
         context3D = go2_context_create(display, geom->base_width, geom->base_height, &attr);
         go2_context_make_current(context3D);
 
-#if 0
+#ifndef FBO_DIRECT
 #if 0
         GLuint colorBuffer;
         glGenRenderbuffers(1, &colorBuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, geom->max_width, geom->max_height);
 #else
-        surface = go2_surface_create(display, geom->max_width, geom->max_height, DRM_FORMAT_RGBA8888);
+        surface = go2_surface_create(display, geom->base_width, geom->base_height, DRM_FORMAT_RGB565);
         if (!surface)
         {
             printf("go2_surface_create failed.\n");
             throw std::exception();
         }
 
+        int drmfd = go2_surface_prime_fd(surface);
+        printf("drmfd=%d\n", drmfd);
+
         EGLint img_attrs[] = {
-            EGL_WIDTH, geom->max_width,
-            EGL_HEIGHT, geom->max_height,
-            EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_RGBA8888,
-            EGL_DMA_BUF_PLANE0_FD_EXT, go2_surface_prime_fd(surface),
+            EGL_WIDTH, geom->base_width,
+            EGL_HEIGHT, geom->base_height,
+            EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_RGB565,
+            EGL_DMA_BUF_PLANE0_FD_EXT, drmfd,
             EGL_DMA_BUF_PLANE0_OFFSET_EXT, 0,
             EGL_DMA_BUF_PLANE0_PITCH_EXT, go2_surface_stride_get(surface),
             EGL_NONE
@@ -153,7 +158,7 @@ void video_configure(const struct retro_game_geometry* geom)
 #if 0
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
 #else
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,	0, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,	texture2D, 0);
 #endif
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
 
@@ -183,7 +188,7 @@ void video_configure(const struct retro_game_geometry* geom)
         }
         
 
-        aspect_ratio = opt_aspect == 0.0f ? geom->aspect_ratio : opt_aspect;
+        
         //printf("video_configure: rect=%d, %d, %d, %d\n", y, x, h, w);
     }
 }
@@ -198,7 +203,11 @@ uintptr_t core_video_get_current_framebuffer()
 {
     //printf("core_video_get_current_framebuffer\n");
 
-    return 0; //fbo;
+#ifndef FBO_DIRECT
+    return fbo;
+#else
+    return 0;
+#endif
 }
 
 void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
@@ -213,30 +222,65 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
         //printf("Backlight = %d\n", opt_backlight);
     }
 
+
+    int x;
+    int y;
+    int w;
+    int h;
+    if (aspect_ratio >= 1.0f)
+    {
+        h = go2_display_width_get(display);
+        
+        w = h * aspect_ratio;
+        w = (w > go2_display_height_get(display)) ? go2_display_height_get(display) : w;
+
+        x = (go2_display_height_get(display) / 2) - (w / 2);
+        y = 0;
+
+        //printf("x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
+    }
+    else
+    {
+        x = 0;
+        y = 0;
+        w = go2_display_height_get(display);
+        h = go2_display_width_get(display);
+    }
+
+
     if (isOpenGL)
     {
-        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        // glClear(GL_COLOR_BUFFER_BIT);
+#if 0
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        
+        glClearColor(1, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        // // // Draw FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
 
-        // // // Swap
+
+#ifdef FBO_DIRECT
+        // Swap
         go2_context_swap_buffers(context3D);
 
-        go2_surface_t* surface = go2_context_surface_lock(context3D);
+        go2_surface_t* gles_surface = go2_context_surface_lock(context3D);
+        go2_presenter_post(presenter,
+                    gles_surface,
+                    0, 0, width, height,
+                    y, x, h, w,
+                    GO2_ROTATION_DEGREES_270);
+
+        go2_context_surface_unlock(context3D, gles_surface);
+ #else
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         go2_presenter_post(presenter,
                     surface,
                     0, 0, width, height,
-                    0, 0, 320, 480,
-                    GO2_ROTATION_DEGREES_270);
-        go2_context_surface_unlock(context3D, surface);
- 
-        // go2_presenter_post(presenter,
-        //             surface,
-        //             0, 0, width, height,
-        //             0, 0, 320, 480,
-        //             GO2_ROTATION_DEGREES_270);
-
+                    y, x, h, w,
+                    GO2_ROTATION_DEGREES_90);
+#endif
         //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     }
     else
@@ -256,29 +300,6 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             dst += go2_surface_stride_get(surface);
             
             --yy;
-        }
-
-
-        int x;
-        int y;
-        int w;
-        int h;
-        if (aspect_ratio >= 1.0f)
-        {
-            h = go2_display_width_get(display);
-            
-            w = h * aspect_ratio;
-            w = (w > go2_display_height_get(display)) ? go2_display_height_get(display) : w;
-
-            x = (go2_display_height_get(display) / 2) - (w / 2);
-            y = 0;
-        }
-        else
-        {
-            x = 0;
-            y = 0;
-            w = go2_display_height_get(display);
-            h = go2_display_width_get(display);
         }
 
         if (screenshot_requested)
