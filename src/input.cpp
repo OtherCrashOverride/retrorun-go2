@@ -38,6 +38,17 @@ static go2_gamepad_state_t prevGamepadState;
 static go2_input_t* input;
 
 
+void input_gamepad_read(go2_gamepad_state_t* out_gamepadState)
+{
+    if (!input)
+    {
+        input = go2_input_create();
+    }
+
+	go2_input_gamepad_read(input, out_gamepadState);
+    prevGamepadState = *out_gamepadState;
+}
+
 void core_input_poll(void)
 {
     if (!input)
@@ -48,7 +59,7 @@ void core_input_poll(void)
 	go2_input_gamepad_read(input, &gamepadState);
     go2_input_battery_read(input, &batteryState);
 
-    if (gamepadState.buttons.f1)
+    if (!prevGamepadState.buttons.f1 && gamepadState.buttons.f1)
     {
         input_exit_requested = true;
     }
