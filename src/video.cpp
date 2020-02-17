@@ -250,6 +250,8 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
 
     if (isOpenGL)
     {
+        if (data != RETRO_HW_FRAME_BUFFER_VALID) return;
+        
 #if 0
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         

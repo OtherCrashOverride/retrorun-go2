@@ -98,5 +98,5 @@ size_t core_audio_sample_batch(const int16_t * data, size_t frames)
     memcpy(audioBuffer + (audioFrameCount * CHANNELS), data, frames * sizeof(int16_t) * CHANNELS);
     audioFrameCount += frames;
 
-	return 0;
+	return frames;
 }
