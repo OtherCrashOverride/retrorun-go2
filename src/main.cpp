@@ -158,6 +158,11 @@ static bool core_environment(unsigned cmd, void* data)
 
 	switch (cmd)
     {
+        case RETRO_ENVIRONMENT_GET_FASTFORWARDING:
+            bval = (bool*)data;
+            *bval = false;
+            return true;
+
         case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
         {
             struct retro_log_callback * cb = (struct retro_log_callback * ) data;
