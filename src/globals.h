@@ -9,3 +9,5 @@ enum RETRORUN_CORE_TYPE
 
 extern RETRORUN_CORE_TYPE Retrorun_Core;
 extern bool Retrorun_UseAnalogStick;
+
+extern bool opt_triggers;

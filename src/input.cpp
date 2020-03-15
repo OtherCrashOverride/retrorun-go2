@@ -189,19 +189,19 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_L:
-                    return gamepadState.buttons.top_left;
+                    return opt_triggers ? gamepadState.buttons.f5 : gamepadState.buttons.top_left;
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_R:
-                    return gamepadState.buttons.top_right;
+                    return opt_triggers ? gamepadState.buttons.f6 : gamepadState.buttons.top_right;
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_L2:
-                    return gamepadState.buttons.f5;
+                    return opt_triggers ? gamepadState.buttons.top_left : gamepadState.buttons.f5;
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_R2:
-                    return gamepadState.buttons.f6;
+                    return opt_triggers ? gamepadState.buttons.top_right : gamepadState.buttons.f6;
                     break;
 
                 default:

@@ -75,6 +75,7 @@ struct option longopts[] = {
     { "backlight", required_argument, NULL, 'b' },
     { "volume", required_argument, NULL, 'v' },
     { "restart", no_argument, NULL, 'r' },
+    { "triggers", no_argument, NULL, 't' },
     { 0, 0, 0, 0 }};
 
 
@@ -606,7 +607,7 @@ int main(int argc, char *argv[])
     int c;
     int option_index = 0;
 
-	while ((c = getopt_long(argc, argv, "s:d:a:b:v:r", longopts, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "s:d:a:b:v:rt", longopts, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -632,6 +633,10 @@ int main(int argc, char *argv[])
 
             case 'r':
                 opt_restart = true;
+                break;
+
+            case 't':
+                opt_triggers = true;
                 break;
 
 			default:
