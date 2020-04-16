@@ -211,6 +211,16 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
         }
         else if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
         {
+            if (gamepadState.thumb.x > 1.0f)
+                gamepadState.thumb.x = 1.0f;
+            else if (gamepadState.thumb.x < -1.0f)
+                gamepadState.thumb.x = -1.0f;
+            
+            if (gamepadState.thumb.y > 1.0f)
+                gamepadState.thumb.y = 1.0f;
+            else if (gamepadState.thumb.y < -1.0f)
+                gamepadState.thumb.y = -1.0f;
+
             switch (id)
             {
                 case RETRO_DEVICE_ID_ANALOG_X:

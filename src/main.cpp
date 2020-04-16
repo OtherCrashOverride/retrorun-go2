@@ -76,6 +76,7 @@ struct option longopts[] = {
     { "volume", required_argument, NULL, 'v' },
     { "restart", no_argument, NULL, 'r' },
     { "triggers", no_argument, NULL, 't' },
+    { "analog", no_argument, NULL, 'n' },
     { 0, 0, 0, 0 }};
 
 
@@ -607,7 +608,7 @@ int main(int argc, char *argv[])
     int c;
     int option_index = 0;
 
-	while ((c = getopt_long(argc, argv, "s:d:a:b:v:rt", longopts, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "s:d:a:b:v:rtn", longopts, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -637,6 +638,10 @@ int main(int argc, char *argv[])
 
             case 't':
                 opt_triggers = true;
+                break;
+
+            case 'n':
+                Retrorun_UseAnalogStick = true;
                 break;
 
 			default:
