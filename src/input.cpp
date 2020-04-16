@@ -209,7 +209,7 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                     break;
             }
         }
-        else if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
+        else if (Retrorun_UseAnalogStick && device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
         {
             if (gamepadState.thumb.x > 1.0f)
                 gamepadState.thumb.x = 1.0f;
