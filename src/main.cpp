@@ -142,8 +142,10 @@ static void core_log(enum retro_log_level level, const char* fmt, ...)
 	fprintf(stdout, "[%s] %s", levelstr[level], buffer);
 	fflush(stdout);
 
+#if 0
 	if (level == RETRO_LOG_ERROR)
 		exit(EXIT_FAILURE);
+#endif
 }
 
 static __eglMustCastToProperFunctionPointerType get_proc_address(const char* sym)
