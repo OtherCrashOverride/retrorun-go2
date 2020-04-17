@@ -26,6 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern bool input_exit_requested;
 
-void input_gamepad_read(go2_gamepad_state_t* out_gamepadState);
+void input_gamepad_read(go2_input_state_t* outState);
 void core_input_poll(void);
 int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id);

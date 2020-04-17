@@ -685,15 +685,18 @@ int main(int argc, char *argv[])
     // Overrides
     printf("Checking overrides.\n");
 
-    go2_gamepad_state_t gamepadState;
-    input_gamepad_read(&gamepadState);
+    go2_input_state_t* gamepadState = go2_input_state_create();
+    input_gamepad_read(gamepadState);
 
-    if (gamepadState.buttons.f1)
+    if (go2_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
     {
         printf("Forcing restart due to button press (F1).\n");
         opt_restart = true;
     }
 
+    go2_input_state_destroy(gamepadState);
+    gamepadState = NULL;
+    
 
     // State
     const char* fileName = FileNameFromPath(arg_rom);
