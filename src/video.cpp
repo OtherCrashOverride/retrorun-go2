@@ -71,7 +71,7 @@ void video_configure(const struct retro_game_geometry* geom)
 
     
     display = go2_display_create();
-    presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
+    presenter = go2_presenter_create(display, DRM_FORMAT_XRGB8888, 0xff080808);  // ABGR
 
 
     if (opt_backlight > -1)
@@ -180,7 +180,15 @@ void video_configure(const struct retro_game_geometry* geom)
         int ah = ALIGN(geom->max_height, 32);
         printf ("video_configure: aw=%d, ah=%d\n", aw, ah);
 
-        surface = go2_surface_create(display, aw, ah, color_format);
+        if (color_format == DRM_FORMAT_RGBA5551)
+        {
+            surface = go2_surface_create(display, aw, ah, DRM_FORMAT_RGB565);
+        }
+        else
+        {
+            surface = go2_surface_create(display, aw, ah, color_format);
+        }
+
         if (!surface)
         {
             printf("go2_surface_create failed.\n");
@@ -296,7 +304,29 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
         int yy = height;
         while(yy > 0)
         {
-            memcpy(dst, src, width * bpp);
+            if (color_format == DRM_FORMAT_RGBA5551)
+            {
+                // uint16_t* src2 = (uint16_t*)src;
+                // uint16_t* dst2 = (uint16_t*)dst;
+
+                uint32_t* src2 = (uint32_t*)src;
+                uint32_t* dst2 = (uint32_t*)dst;
+
+                for (int x = 0; x < width / 2; ++x)
+                {
+                    // uint16_t pixel = src2[x];
+                    // pixel = (pixel << 1) & (~0x1f) | pixel & 0x1f;
+                    // dst2[x] = pixel;
+
+                    uint32_t pixel = src2[x];
+                    pixel = (pixel << 1) & (~0x1f001f) | pixel & 0x1f001f;
+                    dst2[x] = pixel;
+                }
+            }
+            else
+            {
+                memcpy(dst, src, width * bpp);
+            }
             
             src += pitch;
             dst += go2_surface_stride_get(surface);
