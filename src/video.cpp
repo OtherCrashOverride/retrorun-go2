@@ -71,7 +71,7 @@ void video_configure(const struct retro_game_geometry* geom)
 
     
     display = go2_display_create();
-    presenter = go2_presenter_create(display, DRM_FORMAT_XRGB8888, 0xff080808);  // ABGR
+    presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
 
 
     if (opt_backlight > -1)
@@ -319,7 +319,7 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
                     // dst2[x] = pixel;
 
                     uint32_t pixel = src2[x];
-                    pixel = (pixel << 1) & (~0x1f001f) | pixel & 0x1f001f;
+                    pixel = ((pixel << 1) & (~0x3f003f)) | (pixel & 0x1f001f);
                     dst2[x] = pixel;
                 }
             }
