@@ -282,6 +282,16 @@ static bool core_environment(unsigned cmd, void* data)
                 var->value = "OFF";
                 return true;
             }
+            else if (strcmp(var->key, "mame2003-plus_skip_disclaimer") == 0)
+            {
+                var->value = "enabled";
+                return true;
+            }
+            // else if (strcmp(var->key, "mame2003-plus_frameskip") == 0)
+            // {
+            //     var->value = "1";
+            //     return true;
+            // }
             else
             {
                 varmap_t::iterator iter = variables.find(var->key);
