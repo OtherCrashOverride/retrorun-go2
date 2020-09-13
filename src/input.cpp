@@ -39,7 +39,7 @@ static go2_input_t* input;
 static bool has_triggers = false;
 
 
-void input_gamepad_read(go2_input_state_t* outState)
+void input_gamepad_read()
 {
     if (!input)
     {
@@ -56,7 +56,17 @@ void input_gamepad_read(go2_input_state_t* outState)
         prevGamepadState = go2_input_state_create();
     }
 
-	go2_input_state_read(input, outState);
+    // Swap current/previous state
+    go2_input_state_t* tempState = prevGamepadState;
+    prevGamepadState = gamepadState;
+    gamepadState = tempState;
+
+	go2_input_state_read(input, gamepadState);
+}
+
+go2_input_state_t* input_gampad_current_get()
+{
+    return gamepadState;
 }
 
 void core_input_poll(void)
@@ -66,13 +76,9 @@ void core_input_poll(void)
         input = go2_input_create();
     }
 
-    // Swap current/previous state
-    go2_input_state_t* tempState = prevGamepadState;
-    prevGamepadState = gamepadState;
-    gamepadState = tempState;
 
     // Read inputs
-	go2_input_state_read(input, gamepadState);
+	input_gamepad_read();
     go2_input_battery_read(input, &batteryState);
 
     if (go2_input_state_button_get(prevGamepadState, Go2InputButton_F1) == ButtonState_Released &&

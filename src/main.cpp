@@ -701,9 +701,9 @@ int main(int argc, char *argv[])
     // Overrides
     printf("Checking overrides.\n");
 
-    go2_input_state_t* gamepadState = go2_input_state_create();
-    input_gamepad_read(gamepadState);
-
+    input_gamepad_read();
+    
+    go2_input_state_t* gamepadState =input_gampad_current_get();
     if (go2_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
     {
         printf("Forcing restart due to button press (F1).\n");
