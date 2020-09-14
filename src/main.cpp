@@ -709,10 +709,7 @@ int main(int argc, char *argv[])
         printf("Forcing restart due to button press (F1).\n");
         opt_restart = true;
     }
-
-    go2_input_state_destroy(gamepadState);
-    gamepadState = NULL;
-    
+   
 
     // State
     const char* fileName = FileNameFromPath(arg_rom);
