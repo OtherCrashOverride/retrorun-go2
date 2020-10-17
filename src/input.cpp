@@ -76,7 +76,6 @@ void core_input_poll(void)
         input = go2_input_create();
     }
 
-
     // Read inputs
 	input_gamepad_read();
     go2_input_battery_read(input, &batteryState);

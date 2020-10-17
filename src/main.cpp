@@ -533,9 +533,9 @@ static int LoadSram(const char* saveName)
 
     size_t sramSize = g_retro.retro_get_memory_size(0);
     if (size < 1) return -1;
-    if (size != sramSize)
+    if (size != (long)sramSize)
     {
-        printf("LoadSram: File size mismatch (%d != %d)\n", size, sramSize);
+        printf("LoadSram: File size mismatch (%ld != %zu)\n", size, sramSize);
         return -1;
     }
 
@@ -677,7 +677,7 @@ int main(int argc, char *argv[])
 
     if (remaining_args < 2)
     {
-		printf("Usage: %s [-s savedir] [-d systemdir] [-a aspect] core rom", argv[0]);
+		printf("Usage: %s [-s savedir] [-d systemdir] [-a aspect] core rom\n\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -785,6 +785,10 @@ int main(int argc, char *argv[])
     SaveState(savePath);
     free(savePath);
     free(saveName);
+
+    core_unload();
+
+    printf("Exiting.\n");
 
     return 0;
 }
