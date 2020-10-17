@@ -94,10 +94,13 @@ void core_input_poll(void)
 
     if (go2_input_state_button_get(gamepadState, Go2InputButton_F4) == ButtonState_Pressed)
     {
+        constexpr float backlight_factor = 0.2;
         if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadUp) == ButtonState_Pressed &&
             go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadUp) == ButtonState_Released)
         {
-            opt_backlight += 10;
+            int inc = opt_backlight * backlight_factor;
+            if (inc < 1) inc = 1;
+            opt_backlight += inc;
             if (opt_backlight > 100) opt_backlight = 100;
             
             printf("Backlight+ = %d\n", opt_backlight);
@@ -105,7 +108,9 @@ void core_input_poll(void)
         else if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadDown) == ButtonState_Pressed &&
                  go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadDown) == ButtonState_Released)
         {
-            opt_backlight -= 10;
+            int dec = opt_backlight * backlight_factor;
+            if (dec < 1) dec = 1;
+            opt_backlight -= dec;
             if (opt_backlight < 1) opt_backlight = 1;
 
             printf("Backlight- = %d\n", opt_backlight);
