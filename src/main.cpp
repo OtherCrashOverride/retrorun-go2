@@ -756,9 +756,24 @@ int main(int argc, char *argv[])
         gettimeofday(&startTime, NULL);
 
         if (input_exit_requested)
+        {
             isRunning = false;
+        }
+        else if (input_reset_requested)
+        {
+            input_reset_requested = false;
+            g_retro.retro_reset();
+        }
 
-        g_retro.retro_run();
+        if (!input_pause_requested)
+        {
+            g_retro.retro_run();
+        }
+        else
+        {
+            // must poll to unpause
+            core_input_poll();
+        }
         
         gettimeofday(&endTime, NULL);
         ++totalFrames;

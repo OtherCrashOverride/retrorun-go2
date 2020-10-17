@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "video.h"
 
+#include "input.h"
 #include "libretro.h"
 
 #include <stdlib.h>
@@ -218,9 +219,17 @@ uintptr_t core_video_get_current_framebuffer()
 #endif
 }
 
+static int frame_count = 0;
+
 void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
 {
     //printf("core_video_refresh: data=%p, width=%d, height=%d, pitch=%d\n", data, width, height, pitch);
+
+    frame_count++;
+    if (input_ffwd_requested && (frame_count % 4) != 0)
+    {
+        return;
+    }
 
     if (opt_backlight != prevBacklight)
     {
