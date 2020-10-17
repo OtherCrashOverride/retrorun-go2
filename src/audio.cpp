@@ -89,7 +89,7 @@ size_t core_audio_sample_batch(const int16_t * data, size_t frames)
 {
     SetVolume();
 
-    if (audioFrameCount + frames > audioFrameLimit)
+    if (audioFrameCount + (int)frames > audioFrameLimit)
     {
         go2_audio_submit(audio, (const short*)audioBuffer, audioFrameCount);
         audioFrameCount = 0;
