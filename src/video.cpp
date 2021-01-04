@@ -99,7 +99,8 @@ void video_configure(const struct retro_game_geometry* geom)
         attr.depth_bits = 24;
         attr.stencil_bits = 8;
 
-        context3D = go2_context_create(display, geom->base_width, geom->base_height, &attr);
+        //context3D = go2_context_create(display, geom->base_width, geom->base_height, &attr);
+        context3D = go2_context_create(display, geom->max_width, geom->max_height, &attr);
         go2_context_make_current(context3D);
 
 #ifndef FBO_DIRECT
@@ -275,9 +276,13 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
         go2_context_swap_buffers(context3D);
 
         go2_surface_t* gles_surface = go2_context_surface_lock(context3D);
+
+        int ss_w = go2_surface_width_get(gles_surface);
+        int ss_h = go2_surface_height_get(gles_surface);
+
         go2_presenter_post(presenter,
                     gles_surface,
-                    0, 0, width, height,
+                    0, ss_h - height, width, height,
                     y, x, h, w,
                     GO2_ROTATION_DEGREES_270);
 
