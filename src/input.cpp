@@ -37,6 +37,7 @@ static go2_input_state_t* gamepadState;
 static go2_input_state_t* prevGamepadState;
 static go2_input_t* input;
 static bool has_triggers = false;
+static bool has_right_analog = false;
 
 
 void input_gamepad_read()
@@ -50,6 +51,12 @@ void input_gamepad_read()
             has_triggers = true;
 
             printf("input: Hardware triggers enabled.\n");
+        }
+
+        if (go2_input_features_get(input) & Go2InputFeatureFlags_RightAnalog)
+        {
+            has_right_analog = true;
+            printf("input: Right analog enabled.\n");
         }
 
         gamepadState = go2_input_state_create();
@@ -268,9 +275,11 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                     break;
             }
         }
-        else if (Retrorun_UseAnalogStick && device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
+        else if ((Retrorun_UseAnalogStick) && (device == RETRO_DEVICE_ANALOG) && 
+                 (index == RETRO_DEVICE_INDEX_ANALOG_LEFT || index == RETRO_DEVICE_INDEX_ANALOG_RIGHT))
         {
-            go2_thumb_t thumb = go2_input_state_thumbstick_get(gamepadState, Go2InputThumbstick_Left);
+            go2_thumb_t thumb = go2_input_state_thumbstick_get(gamepadState,
+                index == RETRO_DEVICE_INDEX_ANALOG_LEFT ? Go2InputThumbstick_Left : Go2InputThumbstick_Right);
 
             if (thumb.x > 1.0f)
                 thumb.x = 1.0f;

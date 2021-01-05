@@ -440,7 +440,8 @@ static void core_load(const char* sofile)
 
 	printf("Core loaded\n");
 
-    g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
+    //g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
+    g_retro.retro_set_controller_port_device(0, RETRO_DEVICE_ANALOG);
 
     struct retro_system_info system = {
 		0, 0, 0, false, false
