@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "video.h"
 
 #include "libretro.h"
+#include "globals.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -236,6 +237,8 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     int y;
     int w;
     int h;
+    go2_rotation_t rotation = opt_portrait ? GO2_ROTATION_DEGREES_180 : GO2_ROTATION_DEGREES_270;
+
     if (aspect_ratio >= 1.0f)
     {
         h = go2_display_width_get(display);
@@ -284,7 +287,7 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
                     gles_surface,
                     0, ss_h - height, width, height,
                     y, x, h, w,
-                    GO2_ROTATION_DEGREES_270);
+                    rotation);
 
         go2_context_surface_unlock(context3D, gles_surface);
  #else
@@ -363,10 +366,11 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             screenshot_requested = false;
         }
 
+
         go2_presenter_post(presenter,
-                           surface,
-                           0, 0, width, height,
-                           y, x, h, w,
-                           GO2_ROTATION_DEGREES_270);
+                        surface,
+                        0, 0, width, height,
+                        y, x, h, w,
+                        rotation);
     }
 }

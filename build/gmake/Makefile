@@ -64,11 +64,11 @@ ifeq ($(config),release)
 endif
 
 OBJECTS := \
-	$(OBJDIR)/input.o \
-	$(OBJDIR)/audio.o \
 	$(OBJDIR)/video.o \
-	$(OBJDIR)/globals.o \
 	$(OBJDIR)/main.o \
+	$(OBJDIR)/audio.o \
+	$(OBJDIR)/globals.o \
+	$(OBJDIR)/input.o \
 
 RESOURCES := \
 
@@ -129,19 +129,19 @@ $(GCH): $(PCH)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 endif
 
-$(OBJDIR)/input.o: ../../src/input.cpp
+$(OBJDIR)/video.o: ../../src/video.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
+$(OBJDIR)/main.o: ../../src/main.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 $(OBJDIR)/audio.o: ../../src/audio.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/video.o: ../../src/video.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 $(OBJDIR)/globals.o: ../../src/globals.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/main.o: ../../src/main.cpp
+$(OBJDIR)/input.o: ../../src/input.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 

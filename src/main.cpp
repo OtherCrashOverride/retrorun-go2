@@ -72,6 +72,7 @@ int opt_volume = -1;
 bool opt_restart = false;
 const char* arg_core = "";
 const char* arg_rom = "";
+bool opt_portrait = false;
 
 typedef std::map<std::string, std::string> varmap_t ;
 varmap_t variables;
@@ -85,6 +86,7 @@ struct option longopts[] = {
     { "restart", no_argument, NULL, 'r' },
     { "triggers", no_argument, NULL, 't' },
     { "analog", no_argument, NULL, 'n' },
+    { "portrait", no_argument, NULL, 'p' },
     { 0, 0, 0, 0 }};
 
 
@@ -732,6 +734,10 @@ int main(int argc, char *argv[])
                 Retrorun_UseAnalogStick = true;
                 break;
 
+            case 'p':
+                opt_portrait = true;
+                break;
+                
 			default:
 				printf("Unknown option. '%s'\n", longopts[option_index].name);
                 exit(EXIT_FAILURE);

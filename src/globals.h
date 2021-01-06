@@ -11,3 +11,4 @@ extern RETRORUN_CORE_TYPE Retrorun_Core;
 extern bool Retrorun_UseAnalogStick;
 
 extern bool opt_triggers;
+extern bool opt_portrait;

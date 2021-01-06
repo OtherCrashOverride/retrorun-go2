@@ -180,6 +180,33 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
     {
         if (device == RETRO_DEVICE_JOYPAD)
         {
+            if (opt_portrait)
+            {
+                // remap buttons
+                // ABYX = XABY
+                switch(id)
+                {
+                    case RETRO_DEVICE_ID_JOYPAD_A:
+                        id = RETRO_DEVICE_ID_JOYPAD_X;
+                        break;
+
+                    case RETRO_DEVICE_ID_JOYPAD_B:
+                        id = RETRO_DEVICE_ID_JOYPAD_A;
+                        break;
+
+                    case RETRO_DEVICE_ID_JOYPAD_Y:
+                        id = RETRO_DEVICE_ID_JOYPAD_B;
+                        break;
+
+                    case RETRO_DEVICE_ID_JOYPAD_X:
+                        id = RETRO_DEVICE_ID_JOYPAD_Y;
+                        break;
+
+                    default:
+                        break;
+                } 
+            }
+
             switch (id)
             {
                 case RETRO_DEVICE_ID_JOYPAD_B:
@@ -278,6 +305,18 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
         else if ((Retrorun_UseAnalogStick) && (device == RETRO_DEVICE_ANALOG) && 
                  (index == RETRO_DEVICE_INDEX_ANALOG_LEFT || index == RETRO_DEVICE_INDEX_ANALOG_RIGHT))
         {
+            if (opt_portrait)
+            {
+                if (index == RETRO_DEVICE_INDEX_ANALOG_LEFT)
+                {
+                    index = RETRO_DEVICE_INDEX_ANALOG_RIGHT;
+                }
+                else
+                {
+                    index = RETRO_DEVICE_INDEX_ANALOG_LEFT;                    
+                }
+            }
+                
             go2_thumb_t thumb = go2_input_state_thumbstick_get(gamepadState,
                 index == RETRO_DEVICE_INDEX_ANALOG_LEFT ? Go2InputThumbstick_Left : Go2InputThumbstick_Right);
 
@@ -290,6 +329,13 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                 thumb.y = 1.0f;
             else if (thumb.y < -1.0f)
                 thumb.y = -1.0f;
+
+            if (opt_portrait)
+            {
+                float temp = thumb.x;
+                thumb.x = thumb.y * -1.0f;
+                thumb.y = temp;
+            }
 
             switch (id)
             {
