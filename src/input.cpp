@@ -58,6 +58,11 @@ void input_gamepad_read()
             has_right_analog = true;
             printf("input: Right analog enabled.\n");
         }
+        else if (opt_portrait)
+        {
+            opt_portrait = false;
+            printf("input: Disabling portrait mode due to missing right analog stick.\n");
+        }
 
         gamepadState = go2_input_state_create();
         prevGamepadState = go2_input_state_create();
