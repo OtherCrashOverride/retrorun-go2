@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "video.h"
 #include "libretro.h"
 
-#include <go2/input.h>
+#include <gou/input.h>
 #include <stdio.h>
 
 
@@ -31,11 +31,11 @@ extern int opt_backlight;
 extern int opt_volume;
 
 bool input_exit_requested = false;
-go2_battery_state_t batteryState;
+gou_battery_state_t batteryState;
 
-static go2_input_state_t* gamepadState;
-static go2_input_state_t* prevGamepadState;
-static go2_input_t* input;
+static gou_input_state_t* gamepadState;
+static gou_input_state_t* prevGamepadState;
+static gou_input_t* input;
 static bool has_triggers = false;
 static bool has_right_analog = false;
 
@@ -44,39 +44,39 @@ void input_gamepad_read()
 {
     if (!input)
     {
-        input = go2_input_create();
+        input = gou_input_create();
 
-        if (go2_input_features_get(input) & Go2InputFeatureFlags_Triggers)
+        //if (gou_input_features_get(input) & Go2InputFeatureFlags_Triggers)
         {
             has_triggers = true;
 
             printf("input: Hardware triggers enabled.\n");
         }
 
-        if (go2_input_features_get(input) & Go2InputFeatureFlags_RightAnalog)
+        //if (gou_input_features_get(input) & Go2InputFeatureFlags_RightAnalog)
         {
             has_right_analog = true;
             printf("input: Right analog enabled.\n");
         }
-        else if (opt_portrait)
-        {
-            opt_portrait = false;
-            printf("input: Disabling portrait mode due to missing right analog stick.\n");
-        }
+        // else if (opt_portrait)
+        // {
+        //     opt_portrait = false;
+        //     printf("input: Disabling portrait mode due to missing right analog stick.\n");
+        // }
 
-        gamepadState = go2_input_state_create();
-        prevGamepadState = go2_input_state_create();
+        gamepadState = gou_input_state_create();
+        prevGamepadState = gou_input_state_create();
     }
 
     // Swap current/previous state
-    go2_input_state_t* tempState = prevGamepadState;
+    gou_input_state_t* tempState = prevGamepadState;
     prevGamepadState = gamepadState;
     gamepadState = tempState;
 
-	go2_input_state_read(input, gamepadState);
+	gou_input_state_read(input, gamepadState);
 }
 
-go2_input_state_t* input_gampad_current_get()
+gou_input_state_t* input_gampad_current_get()
 {
     return gamepadState;
 }
@@ -85,16 +85,16 @@ void core_input_poll(void)
 {
     if (!input)
     {
-        input = go2_input_create();
+        input = gou_input_create();
     }
 
 
     // Read inputs
 	input_gamepad_read();
-    go2_input_battery_read(input, &batteryState);
+    gou_input_battery_read(input, &batteryState);
 
-    if (go2_input_state_button_get(prevGamepadState, Go2InputButton_F1) == ButtonState_Released &&
-        go2_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
+    if (gou_input_state_button_get(prevGamepadState, Go2InputButton_F1) == ButtonState_Released &&
+        gou_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
     {
         input_exit_requested = true;
     }
@@ -104,18 +104,18 @@ void core_input_poll(void)
     //     screenshot_requested = true;
     // }
 
-    if (go2_input_state_button_get(gamepadState, Go2InputButton_F4) == ButtonState_Pressed)
+    if (gou_input_state_button_get(gamepadState, Go2InputButton_F4) == ButtonState_Pressed)
     {
-        if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadUp) == ButtonState_Pressed &&
-            go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadUp) == ButtonState_Released)
+        if (gou_input_state_button_get(gamepadState, Go2InputButton_DPadUp) == ButtonState_Pressed &&
+            gou_input_state_button_get(prevGamepadState, Go2InputButton_DPadUp) == ButtonState_Released)
         {
             opt_backlight += 10;
             if (opt_backlight > 100) opt_backlight = 100;
             
             printf("Backlight+ = %d\n", opt_backlight);
         }
-        else if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadDown) == ButtonState_Pressed &&
-                 go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadDown) == ButtonState_Released)
+        else if (gou_input_state_button_get(gamepadState, Go2InputButton_DPadDown) == ButtonState_Pressed &&
+                 gou_input_state_button_get(prevGamepadState, Go2InputButton_DPadDown) == ButtonState_Released)
         {
             opt_backlight -= 10;
             if (opt_backlight < 1) opt_backlight = 1;
@@ -123,16 +123,16 @@ void core_input_poll(void)
             printf("Backlight- = %d\n", opt_backlight);
         }
 
-        if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadRight) == ButtonState_Pressed &&
-            go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadRight) == ButtonState_Released)
+        if (gou_input_state_button_get(gamepadState, Go2InputButton_DPadRight) == ButtonState_Pressed &&
+            gou_input_state_button_get(prevGamepadState, Go2InputButton_DPadRight) == ButtonState_Released)
         {
             opt_volume += 5;
             if (opt_volume > 100) opt_volume = 100;
 
             printf("Volume+ = %d\n", opt_volume);
         }
-        else if (go2_input_state_button_get(gamepadState, Go2InputButton_DPadLeft) == ButtonState_Pressed &&
-                 go2_input_state_button_get(prevGamepadState, Go2InputButton_DPadLeft) == ButtonState_Released)
+        else if (gou_input_state_button_get(gamepadState, Go2InputButton_DPadLeft) == ButtonState_Pressed &&
+                 gou_input_state_button_get(prevGamepadState, Go2InputButton_DPadLeft) == ButtonState_Released)
         {
             opt_volume -= 5;
             if (opt_volume < 0) opt_volume = 0;
@@ -154,12 +154,12 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
         // Map thumbstick to dpad
         const float TRIM = 0.35f;
         
-        go2_thumb_t thumb = go2_input_state_thumbstick_get(gamepadState, Go2InputThumbstick_Left);
+        gou_thumb_t thumb = gou_input_state_thumbstick_get(gamepadState, Go2InputThumbstick_Left);
 
-        if (thumb.y < -TRIM) go2_input_state_button_set(gamepadState, Go2InputButton_DPadUp, ButtonState_Pressed);
-        if (thumb.y > TRIM) go2_input_state_button_set(gamepadState, Go2InputButton_DPadDown, ButtonState_Pressed);
-        if (thumb.x < -TRIM) go2_input_state_button_set(gamepadState, Go2InputButton_DPadLeft, ButtonState_Pressed);
-        if (thumb.x > TRIM) go2_input_state_button_set(gamepadState, Go2InputButton_DPadRight, ButtonState_Pressed);
+        if (thumb.y < -TRIM) gou_input_state_button_set(gamepadState, Go2InputButton_DPadUp, ButtonState_Pressed);
+        if (thumb.y > TRIM) gou_input_state_button_set(gamepadState, Go2InputButton_DPadDown, ButtonState_Pressed);
+        if (thumb.x < -TRIM) gou_input_state_button_set(gamepadState, Go2InputButton_DPadLeft, ButtonState_Pressed);
+        if (thumb.x > TRIM) gou_input_state_button_set(gamepadState, Go2InputButton_DPadRight, ButtonState_Pressed);
     }
 
 /*
@@ -215,90 +215,90 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
             switch (id)
             {
                 case RETRO_DEVICE_ID_JOYPAD_B:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_B);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_B);
                     break;
                 
                 case RETRO_DEVICE_ID_JOYPAD_Y:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_Y);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_Y);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_F3);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_F3);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_START:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_F4);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_F4);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_UP:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_DPadUp);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_DPadUp);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_DOWN:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_DPadDown);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_DPadDown);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_LEFT:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_DPadLeft);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_DPadLeft);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_RIGHT:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_DPadRight);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_DPadRight);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_A:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_A);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_A);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_X:
-                    return go2_input_state_button_get(gamepadState, Go2InputButton_X);
+                    return gou_input_state_button_get(gamepadState, Go2InputButton_X);
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_L:
                     if (has_triggers)
                     {
-                        return go2_input_state_button_get(gamepadState, Go2InputButton_TopLeft);
+                        return gou_input_state_button_get(gamepadState, Go2InputButton_TopLeft);
                     }
                     else
                     {
-                        return opt_triggers ? go2_input_state_button_get(gamepadState, Go2InputButton_F5) :
-                            go2_input_state_button_get(gamepadState, Go2InputButton_TopLeft);
+                        return opt_triggers ? gou_input_state_button_get(gamepadState, Go2InputButton_F5) :
+                            gou_input_state_button_get(gamepadState, Go2InputButton_TopLeft);
                     }
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_R:
                     if (has_triggers)
                     {
-                        return go2_input_state_button_get(gamepadState, Go2InputButton_TopRight);
+                        return gou_input_state_button_get(gamepadState, Go2InputButton_TopRight);
                     }
                     else
                     {
-                        return opt_triggers ? go2_input_state_button_get(gamepadState, Go2InputButton_F6) :
-                            go2_input_state_button_get(gamepadState, Go2InputButton_TopRight);
+                        return opt_triggers ? gou_input_state_button_get(gamepadState, Go2InputButton_F6) :
+                            gou_input_state_button_get(gamepadState, Go2InputButton_TopRight);
                     }
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_L2:
                     if (has_triggers)
                     {
-                        return go2_input_state_button_get(gamepadState, Go2InputButton_TriggerLeft);
+                        return gou_input_state_button_get(gamepadState, Go2InputButton_TriggerLeft);
                     }
                     else
                     {
-                        return opt_triggers ? go2_input_state_button_get(gamepadState, Go2InputButton_TopLeft) :
-                            go2_input_state_button_get(gamepadState, Go2InputButton_F5);
+                        return opt_triggers ? gou_input_state_button_get(gamepadState, Go2InputButton_TopLeft) :
+                            gou_input_state_button_get(gamepadState, Go2InputButton_F5);
                     }
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_R2:
                     if (has_triggers)
                     {
-                        return go2_input_state_button_get(gamepadState, Go2InputButton_TriggerRight);
+                        return gou_input_state_button_get(gamepadState, Go2InputButton_TriggerRight);
                     }
                     else
                     {
-                        return opt_triggers ? go2_input_state_button_get(gamepadState, Go2InputButton_TopRight) :
-                            go2_input_state_button_get(gamepadState, Go2InputButton_F6);
+                        return opt_triggers ? gou_input_state_button_get(gamepadState, Go2InputButton_TopRight) :
+                            gou_input_state_button_get(gamepadState, Go2InputButton_F6);
                     }
                     break;
 
@@ -322,7 +322,7 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                 }
             }
                 
-            go2_thumb_t thumb = go2_input_state_thumbstick_get(gamepadState,
+            gou_thumb_t thumb = gou_input_state_thumbstick_get(gamepadState,
                 index == RETRO_DEVICE_INDEX_ANALOG_LEFT ? Go2InputThumbstick_Left : Go2InputThumbstick_Right);
 
             if (thumb.x > 1.0f)

@@ -12,7 +12,7 @@ project "retrorun"
    includedirs { "src/.", "." }
    files { "src/*.h", "src/*.cpp" }
    buildoptions { "-std=c++11 -Wall -D__GBM__" }
-   linkoptions { "-Wl,-rpath=. -L../../. -lgo2 -ldl -lEGL -lGLESv2 -lrga" }
+   linkoptions { "-Wl,-rpath=. -L../../. -lgou -ldl -lEGL -lGLESv2" }
    
    configuration "Debug"
       flags { "Symbols" }

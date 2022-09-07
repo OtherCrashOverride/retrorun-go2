@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <EGL/eglext.h>
 #include <drm/drm_fourcc.h>
 #include <sys/time.h>
-#include <go2/input.h>
+#include <gou/input.h>
 
 
 #define RETRO_DEVICE_ATARI_JOYSTICK RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
@@ -59,7 +59,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                                             * 'data' points to an unsigned variable
                                             */
 
-extern go2_battery_state_t batteryState;
+extern gou_battery_state_t batteryState;
 
 
 retro_hw_context_reset_t retro_context_reset;
@@ -779,8 +779,8 @@ int main(int argc, char *argv[])
 
     input_gamepad_read();
     
-    go2_input_state_t* gamepadState =input_gampad_current_get();
-    if (go2_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
+    gou_input_state_t* gamepadState =input_gampad_current_get();
+    if (gou_input_state_button_get(gamepadState, Go2InputButton_F1) == ButtonState_Pressed)
     {
         printf("Forcing restart due to button press (F1).\n");
         opt_restart = true;

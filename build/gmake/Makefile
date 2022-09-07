@@ -28,7 +28,7 @@ ifeq ($(config),debug)
   CPPFLAGS  += -MMD -MP $(DEFINES) $(INCLUDES)
   CFLAGS    += $(CPPFLAGS) $(ARCH) -g -std=c++11 -Wall -D__GBM__
   CXXFLAGS  += $(CFLAGS) 
-  LDFLAGS   += -Wl,-rpath=. -L../../. -lgo2 -ldl -lEGL -lGLESv2 -lrga
+  LDFLAGS   += -Wl,-rpath=. -L../../. -lgou -ldl -lEGL -lGLESv2
   LIBS      += 
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
   LDDEPS    += 
@@ -50,7 +50,7 @@ ifeq ($(config),release)
   CPPFLAGS  += -MMD -MP $(DEFINES) $(INCLUDES)
   CFLAGS    += $(CPPFLAGS) $(ARCH) -O2 -std=c++11 -Wall -D__GBM__
   CXXFLAGS  += $(CFLAGS) 
-  LDFLAGS   += -s -Wl,-rpath=. -L../../. -lgo2 -ldl -lEGL -lGLESv2 -lrga
+  LDFLAGS   += -s -Wl,-rpath=. -L../../. -lgou -ldl -lEGL -lGLESv2
   LIBS      += 
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
   LDDEPS    += 
@@ -64,11 +64,11 @@ ifeq ($(config),release)
 endif
 
 OBJECTS := \
-	$(OBJDIR)/video.o \
-	$(OBJDIR)/main.o \
-	$(OBJDIR)/audio.o \
 	$(OBJDIR)/globals.o \
+	$(OBJDIR)/video.o \
+	$(OBJDIR)/audio.o \
 	$(OBJDIR)/input.o \
+	$(OBJDIR)/main.o \
 
 RESOURCES := \
 
@@ -129,19 +129,19 @@ $(GCH): $(PCH)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 endif
 
-$(OBJDIR)/video.o: ../../src/video.cpp
+$(OBJDIR)/globals.o: ../../src/globals.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/main.o: ../../src/main.cpp
+$(OBJDIR)/video.o: ../../src/video.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 $(OBJDIR)/audio.o: ../../src/audio.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/globals.o: ../../src/globals.cpp
+$(OBJDIR)/input.o: ../../src/input.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/input.o: ../../src/input.cpp
+$(OBJDIR)/main.o: ../../src/main.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 

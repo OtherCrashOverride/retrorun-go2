@@ -21,12 +21,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <go2/input.h>
+#include <gou/input.h>
 
 
 extern bool input_exit_requested;
 
 void input_gamepad_read();
-go2_input_state_t* input_gampad_current_get();
+gou_input_state_t* input_gampad_current_get();
 void core_input_poll(void);
 int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id);

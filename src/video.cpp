@@ -1,5 +1,5 @@
 /*
-retrorun-go2 - libretro frontend for the ODROID-GO Advance
+retrorun-gou - libretro frontend for the ODROID-GO Advance
 Copyright (C) 2020  OtherCrashOverride
 
 This program is free software; you can redistribute it and/or
@@ -27,7 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <exception>
 #include <string.h>
 
-#include <go2/display.h>
+#include <gou/display.h>
+#include <gou/context3d.h>
 
 #define EGL_EGLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES
@@ -43,12 +44,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern float opt_aspect;
 extern int opt_backlight;
 
-go2_display_t* display;
-go2_surface_t* surface;
-go2_surface_t* display_surface;
-go2_frame_buffer_t* frame_buffer;
-go2_presenter_t* presenter;
-go2_context_t* context3D;
+gou_display_t* display;
+gou_surface_t* surface;
+gou_surface_t* display_surface;
+gou_context3d_t* context3D;
 float aspect_ratio;
 uint32_t color_format;
 
@@ -71,17 +70,17 @@ void video_configure(const struct retro_game_geometry* geom)
         geom->aspect_ratio);
 
     
-    display = go2_display_create();
-    presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);  // ABGR
+    display = gou_display_create();
+    gou_display_background_color_set(display, 0xff080808);  // ABGR
 
 
     if (opt_backlight > -1)
     {
-        go2_display_backlight_set(display, (uint32_t)opt_backlight);
+        //gou_display_backlight_set(display, (uint32_t)opt_backlight);
     }
     else
     {
-        opt_backlight = go2_display_backlight_get(display);
+        //opt_backlight = gou_display_backlight_get(display);
     }
     prevBacklight = opt_backlight;    
 
@@ -90,87 +89,20 @@ void video_configure(const struct retro_game_geometry* geom)
 
     if (isOpenGL)
     {        
-        go2_context_attributes_t attr;
+        gou_context3d_attributes_t attr;
         attr.major = 3;
         attr.minor = 2;
-        attr.red_bits = 5;
-        attr.green_bits = 6;
-        attr.blue_bits = 5;
+        attr.red_bits = 8;
+        attr.green_bits = 8;
+        attr.blue_bits = 8;
         attr.alpha_bits = 0;
         attr.depth_bits = 24;
         attr.stencil_bits = 8;
 
-        //context3D = go2_context_create(display, geom->base_width, geom->base_height, &attr);
-        context3D = go2_context_create(display, geom->max_width, geom->max_height, &attr);
-        go2_context_make_current(context3D);
+        //context3D = gou_context_create(display, geom->base_width, geom->base_height, &attr);
+        context3D = gou_context3d_create(display, geom->max_width, geom->max_height, &attr);
+        gou_context3d_make_current(context3D);
 
-#ifndef FBO_DIRECT
-#if 0
-        GLuint colorBuffer;
-        glGenRenderbuffers(1, &colorBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, geom->max_width, geom->max_height);
-#else
-        surface = go2_surface_create(display, geom->base_width, geom->base_height, DRM_FORMAT_RGB565);
-        if (!surface)
-        {
-            printf("go2_surface_create failed.\n");
-            throw std::exception();
-        }
-
-        int drmfd = go2_surface_prime_fd(surface);
-        printf("drmfd=%d\n", drmfd);
-
-        EGLint img_attrs[] = {
-            EGL_WIDTH, geom->base_width,
-            EGL_HEIGHT, geom->base_height,
-            EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_RGB565,
-            EGL_DMA_BUF_PLANE0_FD_EXT, drmfd,
-            EGL_DMA_BUF_PLANE0_OFFSET_EXT, 0,
-            EGL_DMA_BUF_PLANE0_PITCH_EXT, go2_surface_stride_get(surface),
-            EGL_NONE
-        };
-
-        PFNEGLCREATEIMAGEKHRPROC p_eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
-        if (!p_eglCreateImageKHR) abort();
-
-        EGLImageKHR image = p_eglCreateImageKHR((EGLDisplay)go2_context_egldisplay_get(context3D), EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, 0, img_attrs);
-        fprintf(stderr, "EGLImageKHR = %p\n", image);
-
-        GLuint texture2D;
-        glGenTextures(1, &texture2D);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture2D);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        PFNGLEGLIMAGETARGETTEXTURE2DOESPROC p_glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
-        if (!p_glEGLImageTargetTexture2DOES) abort();
-
-        p_glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);   
-#endif
-
-        GLuint depthBuffer;
-        glGenRenderbuffers(1, &depthBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, geom->max_width, geom->max_height);
-
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-#if 0
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
-#else
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,	texture2D, 0);
-#endif
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-
-        GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-        {
-            printf("FBO: Not Complete.\n");
-            throw std::exception();
-        }
-#endif
 
         retro_context_reset();
     }
@@ -184,16 +116,16 @@ void video_configure(const struct retro_game_geometry* geom)
 
         if (color_format == DRM_FORMAT_RGBA5551)
         {
-            surface = go2_surface_create(display, aw, ah, DRM_FORMAT_RGB565);
+            surface = gou_surface_create(display, aw, ah, DRM_FORMAT_RGB565);
         }
         else
         {
-            surface = go2_surface_create(display, aw, ah, color_format);
+            surface = gou_surface_create(display, aw, ah, color_format);
         }
 
         if (!surface)
         {
-            printf("go2_surface_create failed.\n");
+            printf("gou_surface_create failed.\n");
             throw std::exception();
         }
         
@@ -212,12 +144,7 @@ void video_deinit()
 uintptr_t core_video_get_current_framebuffer()
 {
     //printf("core_video_get_current_framebuffer\n");
-
-#ifndef FBO_DIRECT
-    return fbo;
-#else
-    return 0;
-#endif
+    return gou_context3d_fbo_get(context3D);
 }
 
 void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch)
@@ -226,7 +153,7 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
 
     if (opt_backlight != prevBacklight)
     {
-        go2_display_backlight_set(display, (uint32_t)opt_backlight);
+        //gou_display_backlight_set(display, (uint32_t)opt_backlight);
         prevBacklight = opt_backlight;
 
         //printf("Backlight = %d\n", opt_backlight);
@@ -237,16 +164,16 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     int y;
     int w;
     int h;
-    go2_rotation_t rotation = opt_portrait ? GO2_ROTATION_DEGREES_180 : GO2_ROTATION_DEGREES_270;
+    //gou_rotation_t rotation = opt_portrait ? gou_ROTATION_DEGREES_180 : gou_ROTATION_DEGREES_270;
 
     if (aspect_ratio >= 1.0f)
     {
-        h = go2_display_width_get(display);
+        h = gou_display_height_get(display);
         
         w = h * aspect_ratio;
-        w = (w > go2_display_height_get(display)) ? go2_display_height_get(display) : w;
+        w = (w > gou_display_width_get(display)) ? gou_display_width_get(display) : w;
 
-        x = (go2_display_height_get(display) / 2) - (w / 2);
+        x = (gou_display_width_get(display) / 2) - (w / 2);
         y = 0;
 
         //printf("x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
@@ -255,8 +182,8 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     {
         x = 0;
         y = 0;
-        w = go2_display_height_get(display);
-        h = go2_display_width_get(display);
+        w = gou_display_width_get(display);
+        h = gou_display_height_get(display);
     }
 
 
@@ -264,50 +191,28 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
     {
         if (data != RETRO_HW_FRAME_BUFFER_VALID) return;
         
-#if 0
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        
-        glClearColor(1, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-
-
-#ifdef FBO_DIRECT
         // Swap
-        go2_context_swap_buffers(context3D);
+        //gou_context3d_swap_buffers(context3D);
 
-        go2_surface_t* gles_surface = go2_context_surface_lock(context3D);
+        gou_surface_t* gles_surface = gou_context3d_surface_lock(context3D);
 
-        int ss_w = go2_surface_width_get(gles_surface);
-        int ss_h = go2_surface_height_get(gles_surface);
+        int ss_w = gou_surface_width_get(gles_surface);
+        int ss_h = gou_surface_height_get(gles_surface);
 
-        go2_presenter_post(presenter,
-                    gles_surface,
-                    0, ss_h - height, width, height,
-                    y, x, h, w,
-                    rotation);
+        gou_display_present(display,
+            gles_surface,
+            0, ss_h - height, width, height, false, true,
+            y, x, h, w);
 
-        go2_context_surface_unlock(context3D, gles_surface);
- #else
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        go2_presenter_post(presenter,
-                    surface,
-                    0, 0, width, height,
-                    y, x, h, w,
-                    GO2_ROTATION_DEGREES_90);
-#endif
-        //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        gou_context3d_surface_unlock(context3D, gles_surface);
     }
     else
     {
         if (!data) return;
 
         uint8_t* src = (uint8_t*)data;
-        uint8_t* dst = (uint8_t*)go2_surface_map(surface);
-        int bpp = go2_drm_format_get_bpp(go2_surface_format_get(surface)) / 8;
+        uint8_t* dst = (uint8_t*)gou_surface_map(surface);
+        int bpp = gou_drm_format_get_bpp(gou_surface_format_get(surface)) / 8;
 
         int yy = height;
         while(yy > 0)
@@ -337,40 +242,38 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
             }
             
             src += pitch;
-            dst += go2_surface_stride_get(surface);
+            dst += gou_surface_stride_get(surface);
             
             --yy;
         }
 
-        if (screenshot_requested)
-        {
-            printf("Screenshot.\n");
+        // if (screenshot_requested)
+        // {
+        //     printf("Screenshot.\n");
 
-            int ss_w = go2_surface_width_get(surface);
-            int ss_h = go2_surface_height_get(surface);
-            go2_surface_t* screenshot = go2_surface_create(display, ss_w, ss_h, DRM_FORMAT_RGB888);
-            if (!screenshot)
-            {
-                printf("go2_surface_create failed.\n");
-                throw std::exception();
-            }
+        //     int ss_w = gou_surface_width_get(surface);
+        //     int ss_h = gou_surface_height_get(surface);
+        //     gou_surface_t* screenshot = gou_surface_create(display, ss_w, ss_h, DRM_FORMAT_RGB888);
+        //     if (!screenshot)
+        //     {
+        //         printf("gou_surface_create failed.\n");
+        //         throw std::exception();
+        //     }
 
-            go2_surface_blit(surface, 0, 0, ss_w, ss_h,
-                             screenshot, 0, 0, ss_w, ss_h,
-                             GO2_ROTATION_DEGREES_0);
+        //     gou_surface_blit(surface, 0, 0, ss_w, ss_h,
+        //                      screenshot, 0, 0, ss_w, ss_h,
+        //                      gou_ROTATION_DEGREES_0);
 
-            go2_surface_save_as_png(screenshot, "ScreenShot.png");
+        //     gou_surface_save_as_png(screenshot, "ScreenShot.png");
 
-            go2_surface_destroy(screenshot);
+        //     gou_surface_destroy(screenshot);
 
-            screenshot_requested = false;
-        }
+        //     screenshot_requested = false;
+        // }
 
-
-        go2_presenter_post(presenter,
-                        surface,
-                        0, 0, width, height,
-                        y, x, h, w,
-                        rotation);
+        gou_display_present(display,
+            surface,
+            0, 0, width, height, false, false,
+            x, y, w, h);
     }
 }
