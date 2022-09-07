@@ -342,6 +342,8 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                 thumb.y = temp;
             }
 
+            //printf("thumb: x=%f, y=%f\n", thumb.x, thumb.y);
+
             switch (id)
             {
                 case RETRO_DEVICE_ID_ANALOG_X:

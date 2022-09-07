@@ -196,13 +196,10 @@ void core_video_refresh(const void * data, unsigned width, unsigned height, size
 
         gou_surface_t* gles_surface = gou_context3d_surface_lock(context3D);
 
-        int ss_w = gou_surface_width_get(gles_surface);
-        int ss_h = gou_surface_height_get(gles_surface);
-
         gou_display_present(display,
             gles_surface,
-            0, ss_h - height, width, height, false, true,
-            y, x, h, w);
+            0, 0, width, height, false, true,
+            x, y, w, h);
 
         gou_context3d_surface_unlock(context3D, gles_surface);
     }
