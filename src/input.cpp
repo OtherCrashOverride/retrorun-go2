@@ -85,7 +85,7 @@ void core_input_poll(void)
 {
     if (!input)
     {
-        input = gou_input_create();
+        abort();
     }
 
 
@@ -144,6 +144,8 @@ void core_input_poll(void)
 
 int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id)
 {
+    if (!input) abort();
+
     //int16_t result;
 
     // if (port || index || device != RETRO_DEVICE_JOYPAD)
@@ -342,7 +344,7 @@ int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigne
                 thumb.y = temp;
             }
 
-            //printf("thumb: x=%f, y=%f\n", thumb.x, thumb.y);
+            printf("thumb: x=%f, y=%f\n", thumb.x, thumb.y);
 
             switch (id)
             {
